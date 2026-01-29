@@ -25,6 +25,36 @@ async function initApp() {
     document.addEventListener('mousedown', async () => {
         if (!audioEngine.initialized) {
             await audioEngine.init();
+
+            // Preload default samples
+            // Since we can't scan the FS in the browser, we hardcode the known files from the /audio folder
+            const defaults = [
+                'audio/counting-to-10.wav',
+                'audio/water.wav'
+            ];
+
+            try {
+                // Load all defaults
+                await Promise.all(defaults.map(url => audioEngine.loadFromUrl(url)));
+
+                // Update all slots with the new keys
+                const keys = audioEngine.getLibraryKeys();
+                slots.forEach(slot => slot.updateMenu(keys));
+
+                // Preset: Slot 1 -> counting-to-10.wav
+                // The filename extraction in audioEngine uses pop(), so 'audio/counting-to-10.wav' -> 'counting-to-10.wav'
+                if (slots[0]) {
+                    // Create a pseudo-state to load the sample
+                    slots[0].setState({
+                        slotId: 1,
+                        sampleKey: 'counting-to-10.wav',
+                        settings: slots[0].voice.settings // keep existing settings
+                    });
+                }
+            } catch (err) {
+                console.error("Failed to load default samples", err);
+            }
+
             setupVisualizer();
         }
     }, { once: true });

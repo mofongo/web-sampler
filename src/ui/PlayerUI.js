@@ -143,6 +143,24 @@ export class PlayerUI {
                     loopStart: region.start / duration,
                     loopEnd: region.end / duration
                 });
+                // If playing, restart to jump to the new region immediately
+                if (this.voice.isPlaying) {
+                    this.voice.trigger();
+                }
+            }
+        });
+
+        this.regions.on('region-update-end', (region) => {
+            const duration = this.wavesurfer.getDuration();
+            if (duration > 0) {
+                this.voice.updateSettings({
+                    loopStart: region.start / duration,
+                    loopEnd: region.end / duration
+                });
+                // If playing, restart to jump to the new region immediately
+                if (this.voice.isPlaying) {
+                    this.voice.trigger();
+                }
             }
         });
 

@@ -137,6 +137,23 @@ class AudioEngine {
         return item ? item.blob : null;
     }
 
+    async loadFromUrl(url) {
+        const response = await fetch(url);
+        const blob = await response.blob();
+        // Extract filename from URL (simple version)
+        const name = url.split('/').pop();
+        // File object is compatible with existing decode logic if we mock it or just use similar logic
+        // But here we already have the blob, so let's just use arrayBuffer from blob
+        const arrayBuffer = await blob.arrayBuffer();
+        const audioBuffer = await this.context.decodeAudioData(arrayBuffer);
+
+        // We need a File-like object or at least store the blob with the name
+        // The existing set expects (name, {buffer, blob})
+        this.globalLibrary.set(name, { buffer: audioBuffer, blob: blob });
+
+        return { name, buffer: audioBuffer, blob };
+    }
+
     getLibraryKeys() {
         return Array.from(this.globalLibrary.keys());
     }

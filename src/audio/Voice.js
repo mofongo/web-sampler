@@ -73,6 +73,16 @@ export class Voice {
 
         if (this.activeSource) {
             this.activeSource.playbackRate.setTargetAtTime(pitch, now, 0.05);
+
+            // Live Loop Updates
+            if (this.buffer) {
+                const startSec = this.settings.loopStart * this.buffer.duration;
+                const endSec = this.settings.loopEnd * this.buffer.duration;
+
+                this.activeSource.loop = this.settings.loop;
+                this.activeSource.loopStart = startSec;
+                this.activeSource.loopEnd = endSec;
+            }
         }
         if (this.filterNode) {
             this.filterNode.frequency.setTargetAtTime(cutoff, now, 0.05);
@@ -92,6 +102,12 @@ export class Voice {
         // Voice stealing / Cleanup previous
         if (this.activeSource) {
             this.stop();
+            // Critical fix: stop() schedules a cleanup(), but since we are restarting immediately,
+            // we must cancel that cleanup so it doesn't kill the NEW source we are about to create.
+            if (this.cleanupTimeout) {
+                clearTimeout(this.cleanupTimeout);
+                this.cleanupTimeout = null;
+            }
         }
 
         const { context, masterGain } = audioEngine;
@@ -183,7 +199,12 @@ export class Voice {
             this.activeSource.stop(now + 0.1);
 
             if (this.cleanupTimeout) clearTimeout(this.cleanupTimeout);
-            setTimeout(() => this.cleanup(), 150);
+            // FIX: Assign the timeout ID so it can be cleared if re-triggered
+            this.cleanupTimeout = setTimeout(() => this.cleanup(), 150);
         }
+    }
+
+    get isPlaying() {
+        return !!this.activeSource;
     }
 }
