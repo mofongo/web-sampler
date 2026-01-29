@@ -46,9 +46,6 @@ export class PlayerUI {
                 <div class="waveform-container">
                     <div class="ws-waveform"></div>
                     <div class="drop-overlay">DROP FILE</div>
-                    <div class="debug-overlay" style="position: absolute; top: 5px; right: 5px; font-family: monospace; font-size: 10px; color: lime; background: rgba(0,0,0,0.7); padding: 5px; pointer-events: none; display: none;">
-                        DEBUG INFO
-                    </div>
                 </div>
             </div>
             <div class="parameter-grid">
@@ -80,7 +77,16 @@ export class PlayerUI {
                 </div>
                 <div class="param-item">
                     <label class="label-tiny">Pan</label>
-                    <input type="range" class="param-pan" min="-1" max="1" step="0.01" value="0">
+                    <div class="param-row">
+                        <input type="range" class="param-pan" min="-1" max="1" step="0.01" value="0">
+                        <select class="mod-select param-mod-pan" title="LFO Pan">
+                            <option value="">LFO</option>
+                            <option value="lfo1">L1</option>
+                            <option value="lfo2">L2</option>
+                            <option value="lfo3">L3</option>
+                            <option value="lfo4">L4</option>
+                        </select>
+                    </div>
                 </div>
                 <div class="param-item">
                     <label class="label-tiny">Volume</label>
@@ -310,14 +316,12 @@ export class PlayerUI {
         const loopBtn = this.element.querySelector('.btn-loop');
 
         playBtn.addEventListener('click', () => {
-            if (this.voice.settings.loop && this.voice.activeSource) {
+            if (this.voice.activeSource) {
                 this.voice.stop();
                 playBtn.classList.remove('active');
             } else {
                 this.voice.trigger();
-                if (this.voice.settings.loop) {
-                    playBtn.classList.add('active');
-                }
+                playBtn.classList.add('active');
             }
         });
 
@@ -353,6 +357,7 @@ export class PlayerUI {
                     pitch: this.element.querySelector('.param-mod-pitch').value || null,
                     cutoff: this.element.querySelector('.param-mod-cutoff').value || null,
                     volume: this.element.querySelector('.param-mod-volume').value || null,
+                    pan: this.element.querySelector('.param-mod-pan').value || null,
                     loopStart: this.element.querySelector('.param-mod-loop-start').value || null
                 }
             });
@@ -364,54 +369,47 @@ export class PlayerUI {
         });
 
         // LFO Update Listener
-        // LFO Update Listener
         window.addEventListener('lfo-update', () => {
-            // Debug Overlay Update
-            const debugEl = this.element.querySelector('.debug-overlay');
-            if (debugEl) {
-                if (this.voice.settings.modAssignments.loopStart) {
-                    debugEl.style.display = 'block';
-                    const lfoID = this.voice.settings.modAssignments.loopStart;
-                    const lfoVal = audioEngine.getLFOValue(lfoID);
-                    const base = this.voice.settings.loopStart.toFixed(3);
-                    const offset = (lfoVal * 0.9);
-                    const mod = offset.toFixed(3);
-                    const target = (this.voice.settings.loopStart + offset).toFixed(3);
-
-                    debugEl.innerHTML = `LFO: ${lfoID}<br>Val: ${lfoVal.toFixed(3)}<br>Base: ${base}<br>Mod: ${mod}<br>Tgt: ${target}<br>DragReg: ${this.isDraggingRegion}`;
-                } else {
-                    debugEl.style.display = 'none';
-                }
-            }
-
             if (this.voice.settings.modAssignments.pitch ||
                 this.voice.settings.modAssignments.cutoff ||
                 this.voice.settings.modAssignments.volume ||
+                this.voice.settings.modAssignments.pan ||
                 this.voice.settings.modAssignments.loopStart) {
 
                 this.voice.applyRealtimeParams();
 
-                // Visual Update for Loop Start Slider
-                // Check !this.isDraggingRegion to prevent fighting with loop selection tool
+                // Visual Update for Loop Start Slider and Region
                 if (this.voice.settings.modAssignments.loopStart && !this.isDraggingSlider && !this.isDraggingRegion) {
                     const lfoVal = audioEngine.getLFOValue(this.voice.settings.modAssignments.loopStart);
                     const slider = this.element.querySelector('.param-loop-start');
+                    const duration = this.wavesurfer.getDuration();
 
+                    const currentStart = this.voice.settings.loopStart;
+                    const currentLen = this.voice.settings.loopEnd - this.voice.settings.loopStart;
+
+                    // Modulate shift by +/- 50% (normalized)
+                    const offset = lfoVal * 0.5;
+
+                    // Calculate visual position with clamping (mirroring Voice.js logic)
+                    let visualStart = currentStart + offset;
+                    const maxStart = 1.0 - currentLen;
+                    visualStart = Math.max(0, Math.min(maxStart, visualStart));
+
+                    // Update slider
                     if (slider) {
-                        const currentStart = this.voice.settings.loopStart;
-                        const currentLen = this.voice.settings.loopEnd - this.voice.settings.loopStart;
-
-                        // Modulate shift by +/- 90% (normalized)
-                        const offset = lfoVal * 0.9;
-
-                        // Calculate visual position with clamping (mirroring Voice.js logic)
-                        let visualStart = currentStart + offset;
-
-                        // Clamp: Max start = 1.0 - loopDuration
-                        const maxStart = 1.0 - currentLen;
-                        visualStart = Math.max(0, Math.min(maxStart, visualStart));
-
                         slider.value = visualStart;
+                    }
+
+                    // Update region visual
+                    const regions = this.regions.getRegions();
+                    if (regions.length > 0 && duration > 0) {
+                        const region = regions[0];
+                        const newStartSec = visualStart * duration;
+                        const newEndSec = (visualStart + currentLen) * duration;
+                        region.setOptions({
+                            start: newStartSec,
+                            end: newEndSec
+                        });
                     }
                 }
             }
@@ -544,6 +542,7 @@ export class PlayerUI {
             this.element.querySelector('.param-mod-pitch').value = settings.modAssignments.pitch || '';
             this.element.querySelector('.param-mod-cutoff').value = settings.modAssignments.cutoff || '';
             this.element.querySelector('.param-mod-volume').value = settings.modAssignments.volume || '';
+            this.element.querySelector('.param-mod-pan').value = settings.modAssignments.pan || '';
         }
 
         this.voice.updateSettings(settings);

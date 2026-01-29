@@ -17,11 +17,13 @@ export class Voice {
             volume: 0.8,
             loopStart: 0,
             loopEnd: 1.0,
-            loop: false,
+            loop: true,
             modAssignments: {
-                pitch: null, // 'lfo1', 'lfo2', etc.
+                pitch: null,
                 cutoff: null,
-                volume: null
+                volume: null,
+                pan: null,
+                loopStart: null
             }
         };
 
@@ -56,6 +58,7 @@ export class Voice {
         let pitch = this.settings.pitch;
         let cutoff = this.settings.cutoff;
         let volume = this.settings.volume;
+        let pan = this.settings.pan;
 
         if (this.settings.modAssignments.pitch) {
             const lfoVal = audioEngine.getLFOValue(this.settings.modAssignments.pitch);
@@ -70,6 +73,11 @@ export class Voice {
             const lfoVal = audioEngine.getLFOValue(this.settings.modAssignments.volume);
             volume *= Math.max(0, 1 + lfoVal);
         }
+        if (this.settings.modAssignments.pan) {
+            const lfoVal = audioEngine.getLFOValue(this.settings.modAssignments.pan);
+            // Modulate pan by +/- 1.0, clamp to valid range -1 to 1
+            pan = Math.max(-1, Math.min(1, pan + lfoVal));
+        }
 
         if (this.activeSource) {
             this.activeSource.playbackRate.setTargetAtTime(pitch, now, 0.05);
@@ -78,10 +86,27 @@ export class Voice {
             if (this.buffer) {
                 const startSec = this.settings.loopStart * this.buffer.duration;
                 const endSec = this.settings.loopEnd * this.buffer.duration;
+                const loopDuration = endSec - startSec;
+
+                // Modulate Loop Start (Shift Logic)
+                let finalStart = startSec;
+                if (this.settings.modAssignments.loopStart) {
+                    const lfoVal = audioEngine.getLFOValue(this.settings.modAssignments.loopStart);
+                    // Modulate shift by +/- 50% of file duration
+                    const modAmount = lfoVal * 0.5 * this.buffer.duration;
+                    finalStart = startSec + modAmount;
+                }
+
+                // Clamp start so the full loop fits
+                // Max start = buffer.duration - loopDuration
+                finalStart = Math.max(0, Math.min(this.buffer.duration - loopDuration, finalStart));
+
+                // Calculate End based on fixed duration
+                const finalEnd = finalStart + loopDuration;
 
                 this.activeSource.loop = this.settings.loop;
-                this.activeSource.loopStart = startSec;
-                this.activeSource.loopEnd = endSec;
+                this.activeSource.loopStart = finalStart;
+                this.activeSource.loopEnd = finalEnd;
             }
         }
         if (this.filterNode) {
@@ -89,7 +114,7 @@ export class Voice {
             this.filterNode.Q.setTargetAtTime(this.settings.res, now, 0.05);
         }
         if (this.pannerNode) {
-            this.pannerNode.pan.setTargetAtTime(this.settings.pan, now, 0.05);
+            this.pannerNode.pan.setTargetAtTime(pan, now, 0.05);
         }
         if (this.gainNode && !this.isMuted) {
             this.gainNode.gain.setTargetAtTime(volume, now, 0.05);

@@ -9,7 +9,9 @@ class LFO {
         // For random shapes
         this.lastRandomValue = Math.random() * 2 - 1;
         this.nextRandomValue = Math.random() * 2 - 1;
+        this.nextRandomValue = Math.random() * 2 - 1;
         this.lastUpdateTime = 0;
+        this.lastCycleSNH = -1;
     }
 
     update(currentTime, deltaTime) {
@@ -20,9 +22,13 @@ class LFO {
                 this.value = Math.sin(this.phase);
                 break;
             case 'random-square':
-                // Change value every cycle
-                if (Math.floor(this.phase / Math.PI) !== Math.floor((this.phase - 2 * Math.PI * this.frequency * deltaTime) / Math.PI)) {
-                    this.value = Math.random() > 0.5 ? 1 : -1;
+                // Sample & Hold: Change value every cycle (2*PI)
+                // Use a larger step check to ensure we catch the cycle wrap
+                // logic: maintain a 'lastCycle' index based on phase
+                const currentCycle = Math.floor(this.phase / (2 * Math.PI));
+                if (currentCycle !== this.lastCycleSNH) {
+                    this.value = Math.random() * 2 - 1; // Full range -1 to 1
+                    this.lastCycleSNH = currentCycle;
                 }
                 break;
             case 'smooth-random':
