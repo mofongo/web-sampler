@@ -128,8 +128,12 @@ export class PlayerUI {
                     </div>
                 </div>
                 <div class="param-item">
-                    <label class="label-tiny">FX Send</label>
-                    <input type="range" class="param-fx-send" min="0" max="1.0" step="0.01" value="0" title="Effects Send">
+                    <label class="label-tiny">Delay</label>
+                    <input type="range" class="param-delay-send" min="0" max="1.0" step="0.01" value="0" title="Delay Send">
+                </div>
+                <div class="param-item">
+                    <label class="label-tiny">Reverb</label>
+                    <input type="range" class="param-reverb-send" min="0" max="1.0" step="0.01" value="0" title="Reverb Send">
                 </div>
             </div>
         `;
@@ -503,7 +507,8 @@ export class PlayerUI {
                 cutoff: parseFloat(this.element.querySelector('.param-cutoff').value),
                 pan: parseFloat(this.element.querySelector('.param-pan').value),
                 volume: parseFloat(this.element.querySelector('.param-volume').value),
-                fxSend: parseFloat(this.element.querySelector('.param-fx-send').value),
+                delaySend: parseFloat(this.element.querySelector('.param-delay-send').value),
+                reverbSend: parseFloat(this.element.querySelector('.param-reverb-send').value),
                 modAssignments: {
                     pitch: this.element.querySelector('.param-mod-pitch').value || null,
                     cutoff: this.element.querySelector('.param-mod-cutoff').value || null,
@@ -698,7 +703,8 @@ export class PlayerUI {
         this.element.querySelector('.param-cutoff').value = settings.cutoff;
         this.element.querySelector('.param-pan').value = settings.pan || 0;
         this.element.querySelector('.param-volume').value = settings.volume || 0.8;
-        this.element.querySelector('.param-fx-send').value = settings.fxSend || 0;
+        this.element.querySelector('.param-delay-send').value = settings.delaySend || 0;
+        this.element.querySelector('.param-reverb-send').value = settings.reverbSend || 0;
 
         if (settings.modAssignments) {
             this.element.querySelector('.param-mod-pitch').value = settings.modAssignments.pitch || '';

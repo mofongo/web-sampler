@@ -15,7 +15,8 @@ export class Voice {
             release: 0.4,
             pan: 0,
             volume: 0.8,
-            fxSend: 0,
+            delaySend: 0,
+            reverbSend: 0,
             loopStart: 0,
             loopEnd: 1.0,
             loop: true,
@@ -33,7 +34,8 @@ export class Voice {
         this.filterNode = null;
         this.pannerNode = null;
         this.analyserNode = null;
-        this.fxSendNode = null;
+        this.delaySendNode = null;
+        this.reverbSendNode = null;
         this.isMuted = false;
     }
 
@@ -121,8 +123,11 @@ export class Voice {
         if (this.gainNode && !this.isMuted) {
             this.gainNode.gain.setTargetAtTime(volume, now, 0.05);
         }
-        if (this.fxSendNode) {
-            this.fxSendNode.gain.setTargetAtTime(this.settings.fxSend, now, 0.05);
+        if (this.delaySendNode) {
+            this.delaySendNode.gain.setTargetAtTime(this.settings.delaySend, now, 0.05);
+        }
+        if (this.reverbSendNode) {
+            this.reverbSendNode.gain.setTargetAtTime(this.settings.reverbSend, now, 0.05);
         }
     }
 
@@ -165,9 +170,13 @@ export class Voice {
         this.analyserNode = context.createAnalyser();
         this.analyserNode.fftSize = 32;
 
-        // FX Send
-        this.fxSendNode = context.createGain();
-        this.fxSendNode.gain.value = this.settings.fxSend;
+        // Delay Send
+        this.delaySendNode = context.createGain();
+        this.delaySendNode.gain.value = this.settings.delaySend;
+
+        // Reverb Send
+        this.reverbSendNode = context.createGain();
+        this.reverbSendNode.gain.value = this.settings.reverbSend;
 
         // Routing
         this.activeSource.connect(this.filterNode);
@@ -176,10 +185,14 @@ export class Voice {
         this.analyserNode.connect(this.gainNode);
         this.gainNode.connect(masterGain);
 
-        // FX Send routing (post-panner, pre-gain for parallel processing)
-        if (audioEngine.effectsSend) {
-            this.pannerNode.connect(this.fxSendNode);
-            this.fxSendNode.connect(audioEngine.effectsSend);
+        // Effects Send routing (post-panner, pre-gain for parallel processing)
+        if (audioEngine.delayInput) {
+            this.pannerNode.connect(this.delaySendNode);
+            this.delaySendNode.connect(audioEngine.delayInput);
+        }
+        if (audioEngine.reverbInput) {
+            this.pannerNode.connect(this.reverbSendNode);
+            this.reverbSendNode.connect(audioEngine.reverbInput);
         }
 
         // Initial volume
@@ -222,14 +235,16 @@ export class Voice {
             this.pannerNode.disconnect();
             this.analyserNode.disconnect();
             this.gainNode.disconnect();
-            if (this.fxSendNode) this.fxSendNode.disconnect();
+            if (this.delaySendNode) this.delaySendNode.disconnect();
+            if (this.reverbSendNode) this.reverbSendNode.disconnect();
 
             this.activeSource = null;
             this.filterNode = null;
             this.pannerNode = null;
             this.analyserNode = null;
             this.gainNode = null;
-            this.fxSendNode = null;
+            this.delaySendNode = null;
+            this.reverbSendNode = null;
         }
     }
 

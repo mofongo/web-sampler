@@ -67,7 +67,8 @@ class AudioEngine {
         this.lastTickTime = 0;
 
         // Effects
-        this.effectsSend = null;
+        this.delayInput = null;
+        this.reverbInput = null;
         this.delayNode = null;
         this.delayFeedback = null;
         this.delayWet = null;
@@ -100,9 +101,9 @@ class AudioEngine {
         this.masterGain = this.context.createGain();
         this.masterGain.gain.setValueAtTime(0.8, this.context.currentTime);
 
-        // Effects Send Bus
-        this.effectsSend = this.context.createGain();
-        this.effectsSend.gain.setValueAtTime(1, this.context.currentTime);
+        // Delay Input (voices connect here for delay send)
+        this.delayInput = this.context.createGain();
+        this.delayInput.gain.setValueAtTime(1, this.context.currentTime);
 
         // Delay Effect
         this.delayNode = this.context.createDelay(2.0);
@@ -114,13 +115,17 @@ class AudioEngine {
         this.delayWet = this.context.createGain();
         this.delayWet.gain.setValueAtTime(this.effectsParams.delayMix, this.context.currentTime);
 
-        // Delay routing: effectsSend -> delay -> delayWet -> masterGain
+        // Delay routing: delayInput -> delay -> delayWet -> masterGain
         //                              delay -> feedback -> delay (feedback loop)
-        this.effectsSend.connect(this.delayNode);
+        this.delayInput.connect(this.delayNode);
         this.delayNode.connect(this.delayWet);
         this.delayNode.connect(this.delayFeedback);
         this.delayFeedback.connect(this.delayNode);
         this.delayWet.connect(this.masterGain);
+
+        // Reverb Input (voices connect here for reverb send)
+        this.reverbInput = this.context.createGain();
+        this.reverbInput.gain.setValueAtTime(1, this.context.currentTime);
 
         // Reverb Effect (using ConvolverNode with generated impulse response)
         this.reverbNode = this.context.createConvolver();
@@ -129,8 +134,8 @@ class AudioEngine {
         this.reverbWet = this.context.createGain();
         this.reverbWet.gain.setValueAtTime(this.effectsParams.reverbMix, this.context.currentTime);
 
-        // Reverb routing: effectsSend -> reverb -> reverbWet -> masterGain
-        this.effectsSend.connect(this.reverbNode);
+        // Reverb routing: reverbInput -> reverb -> reverbWet -> masterGain
+        this.reverbInput.connect(this.reverbNode);
         this.reverbNode.connect(this.reverbWet);
         this.reverbWet.connect(this.masterGain);
 
