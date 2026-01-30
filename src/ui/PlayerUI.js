@@ -18,6 +18,18 @@ export class PlayerUI {
         this.isDraggingRegion = false;
         this.vuCanvas = null;
         this.vuCtx = null;
+
+        // Zoom state
+        this.zoomLevel = 0; // 0 = fit to container, higher = more zoomed
+        this.minZoom = 0;
+        this.maxZoom = 500; // pixels per second max
+        this.lastPinchDistance = 0;
+        this.isPinching = false;
+
+        // Auto-scroll state
+        this.autoScrollDirection = 0;
+        this.autoScrollRAF = null;
+
         this.render();
     }
 
@@ -125,6 +137,7 @@ export class PlayerUI {
 
         this.initWaveSurfer(div.querySelector('.ws-waveform'));
         this.setupListeners();
+        this.setupZoom();
         setTimeout(() => this.resizeCanvas(), 50);
         this.startVUMeter();
     }
@@ -209,6 +222,137 @@ export class PlayerUI {
         this.regions.on('region-clicked', () => {
             this.voice.trigger();
         });
+    }
+
+    setupZoom() {
+        const waveformContainer = this.element.querySelector('.waveform-container');
+
+        // Mouse wheel zoom
+        waveformContainer.addEventListener('wheel', (e) => {
+            if (!this.wavesurfer || !this.voice.buffer) return;
+
+            e.preventDefault();
+            const delta = e.deltaY > 0 ? -20 : 20;
+            this.zoomLevel = Math.max(this.minZoom, Math.min(this.maxZoom, this.zoomLevel + delta));
+
+            if (this.zoomLevel === 0) {
+                // Reset to fit container
+                this.wavesurfer.zoom(0);
+            } else {
+                this.wavesurfer.zoom(this.zoomLevel);
+            }
+        }, { passive: false });
+
+        // Touch pinch-to-zoom
+        waveformContainer.addEventListener('touchstart', (e) => {
+            if (e.touches.length === 2) {
+                this.isPinching = true;
+                this.lastPinchDistance = this.getPinchDistance(e.touches);
+            }
+        }, { passive: true });
+
+        waveformContainer.addEventListener('touchmove', (e) => {
+            if (!this.isPinching || e.touches.length !== 2) return;
+            if (!this.wavesurfer || !this.voice.buffer) return;
+
+            e.preventDefault();
+            const currentDistance = this.getPinchDistance(e.touches);
+            const delta = (currentDistance - this.lastPinchDistance) * 0.5;
+
+            this.zoomLevel = Math.max(this.minZoom, Math.min(this.maxZoom, this.zoomLevel + delta));
+
+            if (this.zoomLevel === 0) {
+                this.wavesurfer.zoom(0);
+            } else {
+                this.wavesurfer.zoom(this.zoomLevel);
+            }
+
+            this.lastPinchDistance = currentDistance;
+        }, { passive: false });
+
+        waveformContainer.addEventListener('touchend', (e) => {
+            if (e.touches.length < 2) {
+                this.isPinching = false;
+            }
+        }, { passive: true });
+
+        // Auto-scroll when dragging near edges
+        const edgeThreshold = 40; // pixels from edge to trigger scroll
+        const scrollSpeed = 8;
+
+        const checkEdgeScroll = (clientX) => {
+            if (this.zoomLevel === 0) return; // No scroll needed if not zoomed
+
+            const rect = waveformContainer.getBoundingClientRect();
+            const relativeX = clientX - rect.left;
+
+            if (relativeX < edgeThreshold) {
+                // Near left edge - scroll left
+                this.autoScrollDirection = -scrollSpeed;
+            } else if (relativeX > rect.width - edgeThreshold) {
+                // Near right edge - scroll right
+                this.autoScrollDirection = scrollSpeed;
+            } else {
+                this.autoScrollDirection = 0;
+            }
+
+            if (this.autoScrollDirection !== 0 && !this.autoScrollRAF) {
+                this.startAutoScroll(waveformContainer);
+            } else if (this.autoScrollDirection === 0 && this.autoScrollRAF) {
+                this.stopAutoScroll();
+            }
+        };
+
+        waveformContainer.addEventListener('mousemove', (e) => {
+            if (e.buttons === 1) { // Left mouse button held
+                checkEdgeScroll(e.clientX);
+            }
+        });
+
+        waveformContainer.addEventListener('mouseup', () => {
+            this.stopAutoScroll();
+        });
+
+        waveformContainer.addEventListener('mouseleave', () => {
+            this.stopAutoScroll();
+        });
+
+        // Touch auto-scroll
+        waveformContainer.addEventListener('touchmove', (e) => {
+            if (e.touches.length === 1 && !this.isPinching) {
+                checkEdgeScroll(e.touches[0].clientX);
+            }
+        }, { passive: true });
+
+        waveformContainer.addEventListener('touchend', () => {
+            this.stopAutoScroll();
+        }, { passive: true });
+    }
+
+    startAutoScroll(container) {
+        const scroll = () => {
+            if (this.autoScrollDirection === 0) {
+                this.autoScrollRAF = null;
+                return;
+            }
+            container.scrollLeft += this.autoScrollDirection;
+            this.autoScrollRAF = requestAnimationFrame(scroll);
+        };
+        this.autoScrollRAF = requestAnimationFrame(scroll);
+    }
+
+    stopAutoScroll() {
+        this.autoScrollDirection = 0;
+        if (this.autoScrollRAF) {
+            cancelAnimationFrame(this.autoScrollRAF);
+            this.autoScrollRAF = null;
+        }
+    }
+
+    getPinchDistance(touches) {
+        const dx = touches[0].clientX - touches[1].clientX;
+        const dy = touches[0].clientY - touches[1].clientY;
+        return Math.sqrt(dx * dx + dy * dy);
     }
 
     setupListeners() {
@@ -435,6 +579,10 @@ export class PlayerUI {
         // Wavesurfer v7 load expects a URL or Blob
         const url = URL.createObjectURL(blob);
         this.wavesurfer.load(url);
+
+        // Reset zoom when loading new sample
+        this.zoomLevel = 0;
+        this.wavesurfer.zoom(0);
 
         this.regions.clearRegions();
         this.voice.updateSettings({ loopStart: 0, loopEnd: 1.0 });
