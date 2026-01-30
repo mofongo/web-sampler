@@ -31,8 +31,8 @@ async function initApp() {
             // Preload default samples
             // Since we can't scan the FS in the browser, we hardcode the known files from the /audio folder
             const defaults = [
-                'audio/counting-to-10.wav',
-                'audio/water.wav'
+                '/audio/counting-to-10.wav',
+                '/audio/water.wav'
             ];
 
             try {
