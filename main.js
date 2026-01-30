@@ -11,6 +11,8 @@ const importBtn = document.querySelector('#import-btn');
 let slots = [];
 let lfoRack = null;
 const MAX_SLOTS = 16;
+const STORAGE_KEY = 'poly-sampler-state';
+let saveTimeout = null;
 
 async function initApp() {
     // Initial slots
@@ -41,14 +43,14 @@ async function initApp() {
                 const keys = audioEngine.getLibraryKeys();
                 slots.forEach(slot => slot.updateMenu(keys));
 
-                // Preset: Slot 1 -> counting-to-10.wav
-                // The filename extraction in audioEngine uses pop(), so 'audio/counting-to-10.wav' -> 'counting-to-10.wav'
-                if (slots[0]) {
-                    // Create a pseudo-state to load the sample
+                // Try to restore from localStorage, otherwise use default preset
+                const restored = loadFromLocalStorage();
+                if (!restored && slots[0]) {
+                    // Default preset: Slot 1 -> counting-to-10.wav
                     slots[0].setState({
                         slotId: 1,
                         sampleKey: 'counting-to-10.wav',
-                        settings: slots[0].voice.settings // keep existing settings
+                        settings: slots[0].voice.settings
                     });
                 }
             } catch (err) {
@@ -63,6 +65,7 @@ async function initApp() {
     addSlotBtn.addEventListener('click', () => {
         if (slots.length < MAX_SLOTS) {
             addSlot();
+            saveToLocalStorage();
         } else {
             alert('Maximum 16 slots reached.');
         }
@@ -70,11 +73,18 @@ async function initApp() {
 
     masterVol.addEventListener('input', (e) => {
         audioEngine.setMasterVolume(parseFloat(e.target.value));
+        saveToLocalStorage();
     });
 
     window.addEventListener('new-sample-loaded', () => {
         const keys = audioEngine.getLibraryKeys();
         slots.forEach(slot => slot.updateMenu(keys));
+        saveToLocalStorage();
+    });
+
+    // Listen for state changes from player slots
+    window.addEventListener('slot-state-changed', () => {
+        saveToLocalStorage();
     });
 
     exportBtn.addEventListener('click', exportProject);
@@ -159,7 +169,7 @@ function importProject() {
     input.click();
 }
 
-function applyProjectState(project) {
+function applyProjectState(project, skipSave = false) {
     if (project.masterVolume !== undefined) {
         masterVol.value = project.masterVolume;
         audioEngine.setMasterVolume(project.masterVolume);
@@ -186,6 +196,51 @@ function applyProjectState(project) {
             slot.setState(slotData);
         }
     });
+
+    if (!skipSave) {
+        saveToLocalStorage();
+    }
+}
+
+function getProjectState() {
+    return {
+        masterVolume: parseFloat(masterVol.value),
+        lfos: Object.keys(audioEngine.lfos).map(id => ({
+            id,
+            frequency: audioEngine.lfos[id].frequency,
+            type: audioEngine.lfos[id].type
+        })),
+        slots: slots.map(s => s.getState())
+    };
+}
+
+function saveToLocalStorage() {
+    // Debounce saves to avoid excessive writes
+    if (saveTimeout) {
+        clearTimeout(saveTimeout);
+    }
+    saveTimeout = setTimeout(() => {
+        try {
+            const state = getProjectState();
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+        } catch (err) {
+            console.warn('Failed to save state to localStorage:', err);
+        }
+    }, 500);
+}
+
+function loadFromLocalStorage() {
+    try {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) {
+            const state = JSON.parse(saved);
+            applyProjectState(state, true);
+            return true;
+        }
+    } catch (err) {
+        console.warn('Failed to load state from localStorage:', err);
+    }
+    return false;
 }
 
 initApp();

@@ -202,6 +202,7 @@ export class PlayerUI {
                 if (this.voice.isPlaying) {
                     this.voice.trigger();
                 }
+                window.dispatchEvent(new CustomEvent('slot-state-changed'));
             }
         });
 
@@ -361,6 +362,7 @@ export class PlayerUI {
                     loopStart: this.element.querySelector('.param-mod-loop-start').value || null
                 }
             });
+            window.dispatchEvent(new CustomEvent('slot-state-changed'));
         };
 
         this.element.querySelectorAll('input, select').forEach(input => {

@@ -56,6 +56,7 @@ export class LFORack {
             select.addEventListener('change', (e) => {
                 const id = e.target.dataset.lfo;
                 audioEngine.setLFOParams(id, { type: e.target.value });
+                window.dispatchEvent(new CustomEvent('slot-state-changed'));
             });
         });
 
@@ -66,6 +67,7 @@ export class LFORack {
                 audioEngine.setLFOParams(id, { frequency: freq });
                 const speedDisplay = document.getElementById(`speed-${id}`);
                 if (speedDisplay) speedDisplay.textContent = freq.toFixed(1);
+                window.dispatchEvent(new CustomEvent('slot-state-changed'));
             });
         });
     }
