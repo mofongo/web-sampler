@@ -1,0 +1,14 @@
+alerts:
+  - rule: DEPLOYMENT_FAILED
+  - rule: DOMAIN_FAILED
+name: clownfish-app
+region: nyc
+static_sites:
+  - name: web-sampler
+    github:
+      branch: main
+      deploy_on_push: true
+      repo: mofongo/web-sampler
+    source_dir: /
+    build_command: npm install && npm run build
+    output_dir: dist
