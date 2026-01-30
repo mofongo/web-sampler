@@ -1,6 +1,7 @@
 import { audioEngine } from './src/audio/audioEngine';
 import { PlayerUI } from './src/ui/PlayerUI';
 import { LFORack } from './src/ui/LFORack';
+import { EffectsRack } from './src/ui/EffectsRack';
 
 const rack = document.querySelector('#sampler-rack');
 const addSlotBtn = document.querySelector('#add-slot-btn');
@@ -8,6 +9,7 @@ const masterVol = document.querySelector('#master-vol');
 
 let slots = [];
 let lfoRack = null;
+let effectsRack = null;
 const MAX_SLOTS = 16;
 const STORAGE_KEY = 'poly-sampler-state';
 let saveTimeout = null;
@@ -20,6 +22,9 @@ async function initApp() {
 
     // Initialize LFO Rack
     lfoRack = new LFORack('lfo-rack');
+
+    // Initialize Effects Rack
+    effectsRack = new EffectsRack('effects-rack');
 
     // Initialize Audio on first interaction
     document.addEventListener('mousedown', async () => {
@@ -183,6 +188,11 @@ function applyProjectState(project, skipSave = false) {
         if (lfoRack) lfoRack.render();
     }
 
+    // Apply effects settings
+    if (project.effects && effectsRack) {
+        effectsRack.setState(project.effects);
+    }
+
     // Match slots
     project.slots.forEach((slotData, index) => {
         if (slots[index]) {
@@ -206,6 +216,7 @@ function getProjectState() {
             frequency: audioEngine.lfos[id].frequency,
             type: audioEngine.lfos[id].type
         })),
+        effects: effectsRack ? effectsRack.getState() : null,
         slots: slots.map(s => s.getState())
     };
 }

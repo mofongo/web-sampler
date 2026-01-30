@@ -15,6 +15,7 @@ export class Voice {
             release: 0.4,
             pan: 0,
             volume: 0.8,
+            fxSend: 0,
             loopStart: 0,
             loopEnd: 1.0,
             loop: true,
@@ -32,6 +33,7 @@ export class Voice {
         this.filterNode = null;
         this.pannerNode = null;
         this.analyserNode = null;
+        this.fxSendNode = null;
         this.isMuted = false;
     }
 
@@ -119,6 +121,9 @@ export class Voice {
         if (this.gainNode && !this.isMuted) {
             this.gainNode.gain.setTargetAtTime(volume, now, 0.05);
         }
+        if (this.fxSendNode) {
+            this.fxSendNode.gain.setTargetAtTime(this.settings.fxSend, now, 0.05);
+        }
     }
 
     trigger() {
@@ -160,12 +165,22 @@ export class Voice {
         this.analyserNode = context.createAnalyser();
         this.analyserNode.fftSize = 32;
 
+        // FX Send
+        this.fxSendNode = context.createGain();
+        this.fxSendNode.gain.value = this.settings.fxSend;
+
         // Routing
         this.activeSource.connect(this.filterNode);
         this.filterNode.connect(this.pannerNode);
         this.pannerNode.connect(this.analyserNode);
         this.analyserNode.connect(this.gainNode);
         this.gainNode.connect(masterGain);
+
+        // FX Send routing (post-panner, pre-gain for parallel processing)
+        if (audioEngine.effectsSend) {
+            this.pannerNode.connect(this.fxSendNode);
+            this.fxSendNode.connect(audioEngine.effectsSend);
+        }
 
         // Initial volume
         const targetVol = this.isMuted ? 0 : this.settings.volume;
@@ -207,12 +222,14 @@ export class Voice {
             this.pannerNode.disconnect();
             this.analyserNode.disconnect();
             this.gainNode.disconnect();
+            if (this.fxSendNode) this.fxSendNode.disconnect();
 
             this.activeSource = null;
             this.filterNode = null;
             this.pannerNode = null;
             this.analyserNode = null;
             this.gainNode = null;
+            this.fxSendNode = null;
         }
     }
 

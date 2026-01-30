@@ -65,6 +65,22 @@ class AudioEngine {
             lfo4: new LFO(4)
         };
         this.lastTickTime = 0;
+
+        // Effects
+        this.effectsSend = null;
+        this.delayNode = null;
+        this.delayFeedback = null;
+        this.delayWet = null;
+        this.reverbNode = null;
+        this.reverbWet = null;
+
+        this.effectsParams = {
+            delayTime: 0.3,
+            delayFeedback: 0.4,
+            delayMix: 0.3,
+            reverbDecay: 2,
+            reverbMix: 0.3
+        };
     }
 
     async init() {
@@ -83,6 +99,40 @@ class AudioEngine {
         // Master Gain
         this.masterGain = this.context.createGain();
         this.masterGain.gain.setValueAtTime(0.8, this.context.currentTime);
+
+        // Effects Send Bus
+        this.effectsSend = this.context.createGain();
+        this.effectsSend.gain.setValueAtTime(1, this.context.currentTime);
+
+        // Delay Effect
+        this.delayNode = this.context.createDelay(2.0);
+        this.delayNode.delayTime.setValueAtTime(this.effectsParams.delayTime, this.context.currentTime);
+
+        this.delayFeedback = this.context.createGain();
+        this.delayFeedback.gain.setValueAtTime(this.effectsParams.delayFeedback, this.context.currentTime);
+
+        this.delayWet = this.context.createGain();
+        this.delayWet.gain.setValueAtTime(this.effectsParams.delayMix, this.context.currentTime);
+
+        // Delay routing: effectsSend -> delay -> delayWet -> masterGain
+        //                              delay -> feedback -> delay (feedback loop)
+        this.effectsSend.connect(this.delayNode);
+        this.delayNode.connect(this.delayWet);
+        this.delayNode.connect(this.delayFeedback);
+        this.delayFeedback.connect(this.delayNode);
+        this.delayWet.connect(this.masterGain);
+
+        // Reverb Effect (using ConvolverNode with generated impulse response)
+        this.reverbNode = this.context.createConvolver();
+        this.reverbNode.buffer = this.createReverbImpulse(2, 2, false);
+
+        this.reverbWet = this.context.createGain();
+        this.reverbWet.gain.setValueAtTime(this.effectsParams.reverbMix, this.context.currentTime);
+
+        // Reverb routing: effectsSend -> reverb -> reverbWet -> masterGain
+        this.effectsSend.connect(this.reverbNode);
+        this.reverbNode.connect(this.reverbWet);
+        this.reverbWet.connect(this.masterGain);
 
         // Routing: Master Gain -> Limiter -> Destination
         this.masterGain.connect(this.limiter);
@@ -162,6 +212,59 @@ class AudioEngine {
 
     getLibraryKeys() {
         return Array.from(this.globalLibrary.keys());
+    }
+
+    // Generate a simple reverb impulse response
+    createReverbImpulse(duration, decay, reverse) {
+        const sampleRate = this.context.sampleRate;
+        const length = sampleRate * duration;
+        const impulse = this.context.createBuffer(2, length, sampleRate);
+        const leftChannel = impulse.getChannelData(0);
+        const rightChannel = impulse.getChannelData(1);
+
+        for (let i = 0; i < length; i++) {
+            const n = reverse ? length - i : i;
+            const env = Math.pow(1 - n / length, decay);
+            leftChannel[i] = (Math.random() * 2 - 1) * env;
+            rightChannel[i] = (Math.random() * 2 - 1) * env;
+        }
+
+        return impulse;
+    }
+
+    setDelayTime(value) {
+        if (!this.delayNode) return;
+        this.effectsParams.delayTime = value;
+        this.delayNode.delayTime.setTargetAtTime(value, this.context.currentTime, 0.05);
+    }
+
+    setDelayFeedback(value) {
+        if (!this.delayFeedback) return;
+        this.effectsParams.delayFeedback = value;
+        this.delayFeedback.gain.setTargetAtTime(value, this.context.currentTime, 0.05);
+    }
+
+    setDelayMix(value) {
+        if (!this.delayWet) return;
+        this.effectsParams.delayMix = value;
+        this.delayWet.gain.setTargetAtTime(value, this.context.currentTime, 0.05);
+    }
+
+    setReverbMix(value) {
+        if (!this.reverbWet) return;
+        this.effectsParams.reverbMix = value;
+        this.reverbWet.gain.setTargetAtTime(value, this.context.currentTime, 0.05);
+    }
+
+    setReverbDecay(decay) {
+        if (!this.reverbNode) return;
+        this.effectsParams.reverbDecay = decay;
+        // Recreate impulse with new decay
+        this.reverbNode.buffer = this.createReverbImpulse(2, decay, false);
+    }
+
+    getEffectsParams() {
+        return { ...this.effectsParams };
     }
 }
 
