@@ -57,6 +57,7 @@ export class PlayerUI {
                 </div>
                 <div class="waveform-container">
                     <div class="ws-waveform"></div>
+                    <div class="waveform-placeholder">Choose or drag and drop a sample</div>
                     <div class="drop-overlay">DROP FILE</div>
                 </div>
             </div>
@@ -583,6 +584,11 @@ export class PlayerUI {
         // Reset zoom when loading new sample
         this.zoomLevel = 0;
         this.wavesurfer.zoom(0);
+
+        // Hide placeholder
+        const placeholder = this.element.querySelector('.waveform-placeholder');
+        if (placeholder) placeholder.style.display = 'none';
+        this.element.querySelector('.waveform-container').classList.add('has-sample');
 
         this.regions.clearRegions();
         this.voice.updateSettings({ loopStart: 0, loopEnd: 1.0 });

@@ -5,8 +5,6 @@ import { LFORack } from './src/ui/LFORack';
 const rack = document.querySelector('#sampler-rack');
 const addSlotBtn = document.querySelector('#add-slot-btn');
 const masterVol = document.querySelector('#master-vol');
-const exportBtn = document.querySelector('#export-btn');
-const importBtn = document.querySelector('#import-btn');
 
 let slots = [];
 let lfoRack = null;
@@ -87,8 +85,6 @@ async function initApp() {
         saveToLocalStorage();
     });
 
-    exportBtn.addEventListener('click', exportProject);
-    importBtn.addEventListener('click', importProject);
 }
 
 function addSlot() {
