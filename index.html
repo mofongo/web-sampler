@@ -16,12 +16,13 @@
   <header>
     <div class="logo">POLY-SAMPLER // 2026</div>
     <div class="master-controls">
-      <button id="freesound-btn">FREESOUND</button>
+      <button id="freesound-btn" title="Browse and import sounds from Freesound.org">FREESOUND</button>
+      <button id="add-slot-btn" title="Add a new sampler slot (max 16)">+ ADD SLOT</button>
+      <button id="record-btn" class="record-btn" title="Record master output to file">REC</button>
       <div class="control-group">
         <label class="label-tiny">Master Volume</label>
         <input type="range" id="master-vol" min="0" max="1.5" step="0.01" value="0.8">
       </div>
-      <button id="add-slot-btn">+ ADD SLOT</button>
       <div class="control-group">
         <label class="label-tiny">Output Monitor</label>
         <canvas id="master-visualizer" class="master-visualizer"></canvas>

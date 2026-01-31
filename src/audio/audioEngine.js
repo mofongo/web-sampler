@@ -89,6 +89,12 @@ class AudioEngine {
             reverbDecay: null,
             reverbMix: null
         };
+
+        // Recording
+        this.mediaStreamDest = null;
+        this.mediaRecorder = null;
+        this.recordedChunks = [];
+        this.isRecording = false;
     }
 
     async init() {
@@ -149,6 +155,10 @@ class AudioEngine {
         // Routing: Master Gain -> Limiter -> Destination
         this.masterGain.connect(this.limiter);
         this.limiter.connect(this.context.destination);
+
+        // Recording destination (taps the limiter output)
+        this.mediaStreamDest = this.context.createMediaStreamDestination();
+        this.limiter.connect(this.mediaStreamDest);
 
         this.initialized = true;
         this.startUpdateLoop();
@@ -325,6 +335,76 @@ class AudioEngine {
         if (this.reverbWet) {
             this.reverbWet.gain.setTargetAtTime(reverbMix, now, 0.05);
         }
+    }
+
+    // Recording methods
+    startRecording() {
+        if (!this.initialized || this.isRecording) return false;
+
+        this.recordedChunks = [];
+
+        // Determine supported MIME type
+        const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
+            ? 'audio/webm;codecs=opus'
+            : MediaRecorder.isTypeSupported('audio/webm')
+                ? 'audio/webm'
+                : 'audio/ogg';
+
+        try {
+            this.mediaRecorder = new MediaRecorder(this.mediaStreamDest.stream, {
+                mimeType: mimeType,
+                audioBitsPerSecond: 256000
+            });
+
+            this.mediaRecorder.ondataavailable = (event) => {
+                if (event.data.size > 0) {
+                    this.recordedChunks.push(event.data);
+                }
+            };
+
+            this.mediaRecorder.onstop = () => {
+                this.isRecording = false;
+                window.dispatchEvent(new CustomEvent('recording-stopped', {
+                    detail: { chunks: this.recordedChunks, mimeType: mimeType }
+                }));
+            };
+
+            this.mediaRecorder.start(100); // Collect data every 100ms
+            this.isRecording = true;
+            window.dispatchEvent(new CustomEvent('recording-started'));
+            return true;
+        } catch (err) {
+            console.error('Failed to start recording:', err);
+            return false;
+        }
+    }
+
+    stopRecording() {
+        if (!this.mediaRecorder || !this.isRecording) return;
+
+        this.mediaRecorder.stop();
+    }
+
+    getRecordingBlob() {
+        if (this.recordedChunks.length === 0) return null;
+
+        const mimeType = this.mediaRecorder?.mimeType || 'audio/webm';
+        return new Blob(this.recordedChunks, { type: mimeType });
+    }
+
+    downloadRecording(filename = 'recording') {
+        const blob = this.getRecordingBlob();
+        if (!blob) return;
+
+        const ext = blob.type.includes('webm') ? 'webm' : 'ogg';
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${filename}.${ext}`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
     }
 }
 

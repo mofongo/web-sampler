@@ -8,6 +8,7 @@ const rack = document.querySelector('#sampler-rack');
 const addSlotBtn = document.querySelector('#add-slot-btn');
 const masterVol = document.querySelector('#master-vol');
 const freesoundBtn = document.querySelector('#freesound-btn');
+const recordBtn = document.querySelector('#record-btn');
 
 let slots = [];
 let lfoRack = null;
@@ -33,6 +34,29 @@ async function initApp() {
     freesoundBrowser = new FreesoundBrowser();
     freesoundBtn.addEventListener('click', () => freesoundBrowser.open());
 
+    // Recording controls
+    recordBtn.addEventListener('click', () => {
+        if (audioEngine.isRecording) {
+            audioEngine.stopRecording();
+        } else {
+            audioEngine.startRecording();
+        }
+    });
+
+    window.addEventListener('recording-started', () => {
+        recordBtn.classList.add('recording');
+        recordBtn.textContent = 'STOP';
+    });
+
+    window.addEventListener('recording-stopped', () => {
+        recordBtn.classList.remove('recording');
+        recordBtn.textContent = 'REC';
+
+        // Auto-download the recording
+        const timestamp = new Date().toISOString().slice(0, 19).replace(/[:-]/g, '');
+        audioEngine.downloadRecording(`poly-sampler-${timestamp}`);
+    });
+
     // Initialize Audio on first interaction
     document.addEventListener('mousedown', async () => {
         if (!audioEngine.initialized) {
@@ -53,16 +77,8 @@ async function initApp() {
                 const keys = audioEngine.getLibraryKeys();
                 slots.forEach(slot => slot.updateMenu(keys));
 
-                // Try to restore from localStorage, otherwise use default preset
-                const restored = loadFromLocalStorage();
-                if (!restored && slots[0]) {
-                    // Default preset: Slot 1 -> counting-to-10.wav
-                    slots[0].setState({
-                        slotId: 1,
-                        sampleKey: 'counting-to-10.wav',
-                        settings: slots[0].voice.settings
-                    });
-                }
+                // Try to restore from localStorage
+                loadFromLocalStorage();
             } catch (err) {
                 console.error("Failed to load default samples", err);
             }
