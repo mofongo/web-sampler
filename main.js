@@ -2,14 +2,17 @@ import { audioEngine } from './src/audio/audioEngine';
 import { PlayerUI } from './src/ui/PlayerUI';
 import { LFORack } from './src/ui/LFORack';
 import { EffectsRack } from './src/ui/EffectsRack';
+import { FreesoundBrowser } from './src/ui/FreesoundBrowser';
 
 const rack = document.querySelector('#sampler-rack');
 const addSlotBtn = document.querySelector('#add-slot-btn');
 const masterVol = document.querySelector('#master-vol');
+const freesoundBtn = document.querySelector('#freesound-btn');
 
 let slots = [];
 let lfoRack = null;
 let effectsRack = null;
+let freesoundBrowser = null;
 const MAX_SLOTS = 16;
 const STORAGE_KEY = 'poly-sampler-state';
 let saveTimeout = null;
@@ -25,6 +28,10 @@ async function initApp() {
 
     // Initialize Effects Rack
     effectsRack = new EffectsRack('effects-rack');
+
+    // Initialize Freesound Browser
+    freesoundBrowser = new FreesoundBrowser();
+    freesoundBtn.addEventListener('click', () => freesoundBrowser.open());
 
     // Initialize Audio on first interaction
     document.addEventListener('mousedown', async () => {
