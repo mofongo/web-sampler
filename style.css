@@ -451,8 +451,17 @@ input[type="range"]::-webkit-slider-thumb {
   font-size: 0.65rem;
   color: var(--text-dim);
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
   z-index: 100;
+}
+
+.status-bar a {
+  color: var(--accent-color);
+  text-decoration: none;
+}
+
+.status-bar a:hover {
+  text-decoration: underline;
 }
 
 /* Freesound Browser Modal */
