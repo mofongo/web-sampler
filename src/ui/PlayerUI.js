@@ -129,11 +129,29 @@ export class PlayerUI {
                 </div>
                 <div class="param-item">
                     <label class="label-tiny">Delay</label>
-                    <input type="range" class="param-delay-send" min="0" max="1.0" step="0.01" value="0" title="Delay Send">
+                    <div class="param-row">
+                        <input type="range" class="param-delay-send" min="0" max="1.0" step="0.01" value="0" title="Delay Send">
+                        <select class="mod-select param-mod-delay-send" title="LFO Delay Send">
+                            <option value="">LFO</option>
+                            <option value="lfo1">L1</option>
+                            <option value="lfo2">L2</option>
+                            <option value="lfo3">L3</option>
+                            <option value="lfo4">L4</option>
+                        </select>
+                    </div>
                 </div>
                 <div class="param-item">
                     <label class="label-tiny">Reverb</label>
-                    <input type="range" class="param-reverb-send" min="0" max="1.0" step="0.01" value="0" title="Reverb Send">
+                    <div class="param-row">
+                        <input type="range" class="param-reverb-send" min="0" max="1.0" step="0.01" value="0" title="Reverb Send">
+                        <select class="mod-select param-mod-reverb-send" title="LFO Reverb Send">
+                            <option value="">LFO</option>
+                            <option value="lfo1">L1</option>
+                            <option value="lfo2">L2</option>
+                            <option value="lfo3">L3</option>
+                            <option value="lfo4">L4</option>
+                        </select>
+                    </div>
                 </div>
             </div>
         `;
@@ -514,7 +532,9 @@ export class PlayerUI {
                     cutoff: this.element.querySelector('.param-mod-cutoff').value || null,
                     volume: this.element.querySelector('.param-mod-volume').value || null,
                     pan: this.element.querySelector('.param-mod-pan').value || null,
-                    loopStart: this.element.querySelector('.param-mod-loop-start').value || null
+                    loopStart: this.element.querySelector('.param-mod-loop-start').value || null,
+                    delaySend: this.element.querySelector('.param-mod-delay-send').value || null,
+                    reverbSend: this.element.querySelector('.param-mod-reverb-send').value || null
                 }
             });
             window.dispatchEvent(new CustomEvent('slot-state-changed'));
@@ -531,7 +551,9 @@ export class PlayerUI {
                 this.voice.settings.modAssignments.cutoff ||
                 this.voice.settings.modAssignments.volume ||
                 this.voice.settings.modAssignments.pan ||
-                this.voice.settings.modAssignments.loopStart) {
+                this.voice.settings.modAssignments.loopStart ||
+                this.voice.settings.modAssignments.delaySend ||
+                this.voice.settings.modAssignments.reverbSend) {
 
                 this.voice.applyRealtimeParams();
 
@@ -703,6 +725,7 @@ export class PlayerUI {
         this.element.querySelector('.param-cutoff').value = settings.cutoff;
         this.element.querySelector('.param-pan').value = settings.pan || 0;
         this.element.querySelector('.param-volume').value = settings.volume || 0.8;
+        this.element.querySelector('.param-loop-start').value = settings.loopStart || 0;
         this.element.querySelector('.param-delay-send').value = settings.delaySend || 0;
         this.element.querySelector('.param-reverb-send').value = settings.reverbSend || 0;
 
@@ -711,6 +734,9 @@ export class PlayerUI {
             this.element.querySelector('.param-mod-cutoff').value = settings.modAssignments.cutoff || '';
             this.element.querySelector('.param-mod-volume').value = settings.modAssignments.volume || '';
             this.element.querySelector('.param-mod-pan').value = settings.modAssignments.pan || '';
+            this.element.querySelector('.param-mod-loop-start').value = settings.modAssignments.loopStart || '';
+            this.element.querySelector('.param-mod-delay-send').value = settings.modAssignments.delaySend || '';
+            this.element.querySelector('.param-mod-reverb-send').value = settings.modAssignments.reverbSend || '';
         }
 
         this.voice.updateSettings(settings);

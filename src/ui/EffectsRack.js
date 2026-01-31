@@ -19,11 +19,29 @@ export class EffectsRack {
                     <div class="effect-controls">
                         <div class="param-item">
                             <label class="label-tiny">Time <span class="delay-time-display">0.30</span>s</label>
-                            <input type="range" class="delay-time" min="0.05" max="1.0" step="0.01" value="0.3">
+                            <div class="param-row">
+                                <input type="range" class="delay-time" min="0.05" max="1.0" step="0.01" value="0.3">
+                                <select class="mod-select delay-time-mod">
+                                    <option value="">LFO</option>
+                                    <option value="lfo1">L1</option>
+                                    <option value="lfo2">L2</option>
+                                    <option value="lfo3">L3</option>
+                                    <option value="lfo4">L4</option>
+                                </select>
+                            </div>
                         </div>
                         <div class="param-item">
                             <label class="label-tiny">Feedback <span class="delay-feedback-display">40</span>%</label>
-                            <input type="range" class="delay-feedback" min="0" max="0.9" step="0.01" value="0.4">
+                            <div class="param-row">
+                                <input type="range" class="delay-feedback" min="0" max="0.9" step="0.01" value="0.4">
+                                <select class="mod-select delay-feedback-mod">
+                                    <option value="">LFO</option>
+                                    <option value="lfo1">L1</option>
+                                    <option value="lfo2">L2</option>
+                                    <option value="lfo3">L3</option>
+                                    <option value="lfo4">L4</option>
+                                </select>
+                            </div>
                         </div>
                         <div class="param-item">
                             <label class="label-tiny">Mix <span class="delay-mix-display">30</span>%</label>
@@ -42,7 +60,16 @@ export class EffectsRack {
                         </div>
                         <div class="param-item">
                             <label class="label-tiny">Mix <span class="reverb-mix-display">30</span>%</label>
-                            <input type="range" class="reverb-mix" min="0" max="1" step="0.01" value="0.3">
+                            <div class="param-row">
+                                <input type="range" class="reverb-mix" min="0" max="1" step="0.01" value="0.3">
+                                <select class="mod-select reverb-mix-mod">
+                                    <option value="">LFO</option>
+                                    <option value="lfo1">L1</option>
+                                    <option value="lfo2">L2</option>
+                                    <option value="lfo3">L3</option>
+                                    <option value="lfo4">L4</option>
+                                </select>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -99,10 +126,32 @@ export class EffectsRack {
             reverbMixDisplay.textContent = Math.round(value * 100);
             window.dispatchEvent(new CustomEvent('slot-state-changed'));
         });
+
+        // LFO mod assignments for effects
+        const delayTimeMod = this.container.querySelector('.delay-time-mod');
+        delayTimeMod.addEventListener('change', (e) => {
+            audioEngine.setEffectsModAssignment('delayTime', e.target.value);
+            window.dispatchEvent(new CustomEvent('slot-state-changed'));
+        });
+
+        const delayFeedbackMod = this.container.querySelector('.delay-feedback-mod');
+        delayFeedbackMod.addEventListener('change', (e) => {
+            audioEngine.setEffectsModAssignment('delayFeedback', e.target.value);
+            window.dispatchEvent(new CustomEvent('slot-state-changed'));
+        });
+
+        const reverbMixMod = this.container.querySelector('.reverb-mix-mod');
+        reverbMixMod.addEventListener('change', (e) => {
+            audioEngine.setEffectsModAssignment('reverbMix', e.target.value);
+            window.dispatchEvent(new CustomEvent('slot-state-changed'));
+        });
     }
 
     getState() {
-        return audioEngine.getEffectsParams();
+        return {
+            ...audioEngine.getEffectsParams(),
+            modAssignments: audioEngine.getEffectsModAssignments()
+        };
     }
 
     setState(state) {
@@ -132,6 +181,22 @@ export class EffectsRack {
             audioEngine.setReverbMix(state.reverbMix);
             this.container.querySelector('.reverb-mix').value = state.reverbMix;
             this.container.querySelector('.reverb-mix-display').textContent = Math.round(state.reverbMix * 100);
+        }
+
+        // Restore mod assignments
+        if (state.modAssignments) {
+            if (state.modAssignments.delayTime !== undefined) {
+                audioEngine.setEffectsModAssignment('delayTime', state.modAssignments.delayTime);
+                this.container.querySelector('.delay-time-mod').value = state.modAssignments.delayTime || '';
+            }
+            if (state.modAssignments.delayFeedback !== undefined) {
+                audioEngine.setEffectsModAssignment('delayFeedback', state.modAssignments.delayFeedback);
+                this.container.querySelector('.delay-feedback-mod').value = state.modAssignments.delayFeedback || '';
+            }
+            if (state.modAssignments.reverbMix !== undefined) {
+                audioEngine.setEffectsModAssignment('reverbMix', state.modAssignments.reverbMix);
+                this.container.querySelector('.reverb-mix-mod').value = state.modAssignments.reverbMix || '';
+            }
         }
     }
 }

@@ -25,7 +25,9 @@ export class Voice {
                 cutoff: null,
                 volume: null,
                 pan: null,
-                loopStart: null
+                loopStart: null,
+                delaySend: null,
+                reverbSend: null
             }
         };
 
@@ -123,11 +125,24 @@ export class Voice {
         if (this.gainNode && !this.isMuted) {
             this.gainNode.gain.setTargetAtTime(volume, now, 0.05);
         }
+        // Modulate sends
+        let delaySend = this.settings.delaySend;
+        let reverbSend = this.settings.reverbSend;
+
+        if (this.settings.modAssignments.delaySend) {
+            const lfoVal = audioEngine.getLFOValue(this.settings.modAssignments.delaySend);
+            delaySend = Math.max(0, Math.min(1, delaySend + lfoVal * 0.5));
+        }
+        if (this.settings.modAssignments.reverbSend) {
+            const lfoVal = audioEngine.getLFOValue(this.settings.modAssignments.reverbSend);
+            reverbSend = Math.max(0, Math.min(1, reverbSend + lfoVal * 0.5));
+        }
+
         if (this.delaySendNode) {
-            this.delaySendNode.gain.setTargetAtTime(this.settings.delaySend, now, 0.05);
+            this.delaySendNode.gain.setTargetAtTime(delaySend, now, 0.05);
         }
         if (this.reverbSendNode) {
-            this.reverbSendNode.gain.setTargetAtTime(this.settings.reverbSend, now, 0.05);
+            this.reverbSendNode.gain.setTargetAtTime(reverbSend, now, 0.05);
         }
     }
 

@@ -82,6 +82,13 @@ class AudioEngine {
             reverbDecay: 2,
             reverbMix: 0.3
         };
+
+        this.effectsModAssignments = {
+            delayTime: null,
+            delayFeedback: null,
+            reverbDecay: null,
+            reverbMix: null
+        };
     }
 
     async init() {
@@ -155,6 +162,8 @@ class AudioEngine {
 
             if (deltaTime > 0 && deltaTime < 0.1) {
                 Object.values(this.lfos).forEach(lfo => lfo.update(time, deltaTime));
+                // Apply modulated effects
+                this.applyModulatedEffects();
                 // Signal voices to update their modulated parameters
                 window.dispatchEvent(new CustomEvent('lfo-update'));
             }
@@ -270,6 +279,52 @@ class AudioEngine {
 
     getEffectsParams() {
         return { ...this.effectsParams };
+    }
+
+    getEffectsModAssignments() {
+        return { ...this.effectsModAssignments };
+    }
+
+    setEffectsModAssignment(param, lfoId) {
+        if (param in this.effectsModAssignments) {
+            this.effectsModAssignments[param] = lfoId || null;
+        }
+    }
+
+    applyModulatedEffects() {
+        if (!this.initialized) return;
+
+        const now = this.context.currentTime;
+
+        // Modulate delay time
+        let delayTime = this.effectsParams.delayTime;
+        if (this.effectsModAssignments.delayTime) {
+            const lfoVal = this.getLFOValue(this.effectsModAssignments.delayTime);
+            delayTime = Math.max(0.05, Math.min(1.0, delayTime + lfoVal * 0.3));
+        }
+        if (this.delayNode) {
+            this.delayNode.delayTime.setTargetAtTime(delayTime, now, 0.05);
+        }
+
+        // Modulate delay feedback
+        let delayFeedback = this.effectsParams.delayFeedback;
+        if (this.effectsModAssignments.delayFeedback) {
+            const lfoVal = this.getLFOValue(this.effectsModAssignments.delayFeedback);
+            delayFeedback = Math.max(0, Math.min(0.9, delayFeedback + lfoVal * 0.3));
+        }
+        if (this.delayFeedback) {
+            this.delayFeedback.gain.setTargetAtTime(delayFeedback, now, 0.05);
+        }
+
+        // Modulate reverb mix
+        let reverbMix = this.effectsParams.reverbMix;
+        if (this.effectsModAssignments.reverbMix) {
+            const lfoVal = this.getLFOValue(this.effectsModAssignments.reverbMix);
+            reverbMix = Math.max(0, Math.min(1, reverbMix + lfoVal * 0.5));
+        }
+        if (this.reverbWet) {
+            this.reverbWet.gain.setTargetAtTime(reverbMix, now, 0.05);
+        }
     }
 }
 
