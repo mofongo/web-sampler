@@ -41,7 +41,7 @@ export class PlayerUI {
             <div class="slot-header">
                 <span class="slot-title">SLOT ${String(this.id).padStart(2, '0')}</span>
                 <select class="sample-select">
-                    <option value="">- No Sample -</option>
+                    <option value="">Select a Sample</option>
                 </select>
                 <div class="slot-actions">
                     <button class="btn-icon btn-loop active" title="Toggle Looping">L</button>
@@ -57,7 +57,6 @@ export class PlayerUI {
                 </div>
                 <div class="waveform-container">
                     <div class="ws-waveform"></div>
-                    <div class="waveform-placeholder">Choose or drag and drop a sample</div>
                     <div class="drop-overlay">DROP FILE</div>
                 </div>
             </div>
@@ -617,9 +616,7 @@ export class PlayerUI {
         this.zoomLevel = 0;
         this.wavesurfer.zoom(0);
 
-        // Hide placeholder
-        const placeholder = this.element.querySelector('.waveform-placeholder');
-        if (placeholder) placeholder.style.display = 'none';
+        // Mark as having a sample (removes pulsing border)
         this.element.querySelector('.waveform-container').classList.add('has-sample');
 
         this.regions.clearRegions();
@@ -630,7 +627,7 @@ export class PlayerUI {
         const select = this.element.querySelector('.sample-select');
         const currentValue = select.value;
 
-        select.innerHTML = '<option value="">- No Sample -</option>';
+        select.innerHTML = '<option value="">Select a Sample</option>';
         keys.forEach(key => {
             const option = document.createElement('option');
             option.value = key;

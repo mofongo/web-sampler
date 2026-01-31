@@ -211,6 +211,23 @@ button.primary:hover {
   position: relative;
   border: 1px solid rgba(255, 255, 255, 0.05);
   touch-action: pan-x pinch-zoom;
+  animation: pulse-empty 2s ease-in-out infinite;
+}
+
+.waveform-container.has-sample {
+  animation: none;
+  border-color: rgba(255, 255, 255, 0.05);
+}
+
+@keyframes pulse-empty {
+  0%, 100% {
+    border-color: rgba(0, 242, 255, 0.15);
+    box-shadow: inset 0 0 10px rgba(0, 242, 255, 0.03);
+  }
+  50% {
+    border-color: rgba(0, 242, 255, 0.4);
+    box-shadow: inset 0 0 15px rgba(0, 242, 255, 0.08);
+  }
 }
 
 .waveform-container::-webkit-scrollbar {
@@ -244,26 +261,6 @@ button.primary:hover {
 .ws-waveform ::part(region-handle-right) {
   border-left: 2px solid var(--accent-color);
   width: 2px;
-}
-
-.waveform-placeholder {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.75rem;
-  color: var(--text-dim);
-  pointer-events: none;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.waveform-container.has-sample .waveform-placeholder {
-  display: none !important;
 }
 
 .drop-overlay {

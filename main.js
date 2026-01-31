@@ -62,26 +62,22 @@ async function initApp() {
         if (!audioEngine.initialized) {
             await audioEngine.init();
 
-            // Preload default samples
-            // Since we can't scan the FS in the browser, we hardcode the known files from the /audio folder
-            const defaults = [
+            // Preload sample library
+            const defaultSamples = [
                 '/audio/counting-to-10.wav',
                 '/audio/water.wav'
             ];
 
             try {
-                // Load all defaults
-                await Promise.all(defaults.map(url => audioEngine.loadFromUrl(url)));
-
-                // Update all slots with the new keys
+                await Promise.all(defaultSamples.map(url => audioEngine.loadFromUrl(url)));
                 const keys = audioEngine.getLibraryKeys();
                 slots.forEach(slot => slot.updateMenu(keys));
-
-                // Try to restore from localStorage
-                loadFromLocalStorage();
             } catch (err) {
-                console.error("Failed to load default samples", err);
+                console.error('Failed to load default samples:', err);
             }
+
+            // Try to restore from localStorage
+            loadFromLocalStorage();
 
             setupVisualizer();
         }
