@@ -58,6 +58,7 @@ export class Voice {
     }
 
     applyRealtimeParams() {
+        if (!audioEngine.initialized) return;
         const now = audioEngine.context.currentTime;
 
         // Base values with LFO modulation if assigned

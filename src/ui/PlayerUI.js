@@ -30,6 +30,10 @@ export class PlayerUI {
         this.autoScrollDirection = 0;
         this.autoScrollRAF = null;
 
+        // Pending async operations (for cleanup)
+        this._pendingOnReady = null;
+        this._pendingRegionTimeout = null;
+
         this.render();
     }
 
@@ -607,14 +611,25 @@ export class PlayerUI {
     }
 
     loadBuffer(buffer, blob) {
+        // Cancel any pending ready handler from previous load
+        if (this._pendingOnReady) {
+            this.wavesurfer.un('ready', this._pendingOnReady);
+            this._pendingOnReady = null;
+        }
+
         this.voice.setBuffer(buffer);
         // Wavesurfer v7 load expects a URL or Blob
         const url = URL.createObjectURL(blob);
-        this.wavesurfer.load(url);
 
-        // Reset zoom when loading new sample
-        this.zoomLevel = 0;
-        this.wavesurfer.zoom(0);
+        // Wait for wavesurfer to be ready before resetting zoom
+        this._pendingOnReady = () => {
+            this.zoomLevel = 0;
+            this.wavesurfer.zoom(0);
+            this._pendingOnReady = null;
+        };
+        this.wavesurfer.on('ready', this._pendingOnReady);
+
+        this.wavesurfer.load(url);
 
         // Mark as having a sample (removes pulsing border)
         this.element.querySelector('.waveform-container').classList.add('has-sample');
@@ -699,13 +714,23 @@ export class PlayerUI {
     }
 
     setState(state) {
+        // Cancel any pending region timeout from previous setState
+        if (this._pendingRegionTimeout) {
+            clearTimeout(this._pendingRegionTimeout);
+            this._pendingRegionTimeout = null;
+        }
+
+        // Stop any playing voice
+        this.voice.stop();
+
         if (state.sampleKey) {
             const buffer = audioEngine.getBuffer(state.sampleKey);
             const blob = audioEngine.getBlob(state.sampleKey);
             if (buffer && blob) {
                 this.loadBuffer(buffer, blob);
                 if (state.region) {
-                    setTimeout(() => {
+                    this._pendingRegionTimeout = setTimeout(() => {
+                        this._pendingRegionTimeout = null;
                         this.regions.addRegion({
                             start: state.region.start,
                             end: state.region.end,

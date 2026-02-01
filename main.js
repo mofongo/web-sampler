@@ -3,6 +3,8 @@ import { PlayerUI } from './src/ui/PlayerUI';
 import { LFORack } from './src/ui/LFORack';
 import { EffectsRack } from './src/ui/EffectsRack';
 import { FreesoundBrowser } from './src/ui/FreesoundBrowser';
+import { PresetDropdown } from './src/ui/PresetDropdown';
+import { presetStorage } from './src/storage/presetStorage';
 
 const rack = document.querySelector('#sampler-rack');
 const addSlotBtn = document.querySelector('#add-slot-btn');
@@ -14,9 +16,8 @@ let slots = [];
 let lfoRack = null;
 let effectsRack = null;
 let freesoundBrowser = null;
+let presetDropdown = null;
 const MAX_SLOTS = 16;
-const STORAGE_KEY = 'poly-sampler-state';
-let saveTimeout = null;
 
 async function initApp() {
     // Initial slots
@@ -33,6 +34,16 @@ async function initApp() {
     // Initialize Freesound Browser
     freesoundBrowser = new FreesoundBrowser();
     freesoundBtn.addEventListener('click', () => freesoundBrowser.open());
+
+    // Initialize Preset System
+    await presetStorage.init();
+    presetDropdown = new PresetDropdown();
+    presetDropdown.onSave = handleSavePreset;
+    presetDropdown.onLoad = handleLoadPreset;
+    presetDropdown.onDelete = handleDeletePreset;
+
+    const masterControls = document.querySelector('.master-controls');
+    masterControls.insertBefore(presetDropdown.element, masterControls.firstChild);
 
     // Recording controls
     recordBtn.addEventListener('click', () => {
@@ -76,9 +87,6 @@ async function initApp() {
                 console.error('Failed to load default samples:', err);
             }
 
-            // Try to restore from localStorage
-            loadFromLocalStorage();
-
             setupVisualizer();
         }
     }, { once: true });
@@ -87,7 +95,6 @@ async function initApp() {
     addSlotBtn.addEventListener('click', () => {
         if (slots.length < MAX_SLOTS) {
             addSlot();
-            saveToLocalStorage();
         } else {
             alert('Maximum 16 slots reached.');
         }
@@ -95,18 +102,11 @@ async function initApp() {
 
     masterVol.addEventListener('input', (e) => {
         audioEngine.setMasterVolume(parseFloat(e.target.value));
-        saveToLocalStorage();
     });
 
     window.addEventListener('new-sample-loaded', () => {
         const keys = audioEngine.getLibraryKeys();
         slots.forEach(slot => slot.updateMenu(keys));
-        saveToLocalStorage();
-    });
-
-    // Listen for state changes from player slots
-    window.addEventListener('slot-state-changed', () => {
-        saveToLocalStorage();
     });
 
 }
@@ -189,7 +189,7 @@ function importProject() {
     input.click();
 }
 
-function applyProjectState(project, skipSave = false) {
+function applyProjectState(project) {
     if (project.masterVolume !== undefined) {
         masterVol.value = project.masterVolume;
         audioEngine.setMasterVolume(project.masterVolume);
@@ -221,10 +221,6 @@ function applyProjectState(project, skipSave = false) {
             slot.setState(slotData);
         }
     });
-
-    if (!skipSave) {
-        saveToLocalStorage();
-    }
 }
 
 function getProjectState() {
@@ -240,33 +236,45 @@ function getProjectState() {
     };
 }
 
-function saveToLocalStorage() {
-    // Debounce saves to avoid excessive writes
-    if (saveTimeout) {
-        clearTimeout(saveTimeout);
-    }
-    saveTimeout = setTimeout(() => {
-        try {
-            const state = getProjectState();
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-        } catch (err) {
-            console.warn('Failed to save state to localStorage:', err);
-        }
-    }, 500);
+async function handleSavePreset(name) {
+    const projectState = getProjectState();
+    await presetStorage.savePreset(
+        name,
+        projectState,
+        (sampleKey) => audioEngine.getBlob(sampleKey)
+    );
 }
 
-function loadFromLocalStorage() {
-    try {
-        const saved = localStorage.getItem(STORAGE_KEY);
-        if (saved) {
-            const state = JSON.parse(saved);
-            applyProjectState(state, true);
-            return true;
-        }
-    } catch (err) {
-        console.warn('Failed to load state from localStorage:', err);
+async function handleLoadPreset(presetId) {
+    // Ensure audio engine is initialized
+    if (!audioEngine.initialized) {
+        await audioEngine.init();
+        setupVisualizer();
     }
-    return false;
+
+    const { preset, samples } = await presetStorage.loadPreset(presetId);
+
+    // Load samples into audioEngine's globalLibrary
+    for (const [name, blob] of samples) {
+        if (!audioEngine.getBuffer(name)) {
+            const arrayBuffer = await blob.arrayBuffer();
+            const buffer = await audioEngine.context.decodeAudioData(arrayBuffer);
+            audioEngine.globalLibrary.set(name, { buffer, blob });
+        }
+    }
+
+    // Update sample menus
+    const keys = audioEngine.getLibraryKeys();
+    slots.forEach(slot => slot.updateMenu(keys));
+
+    // Apply the project state
+    applyProjectState(preset.state);
+
+    presetDropdown.showToast(`Loaded: ${preset.name}`);
+}
+
+async function handleDeletePreset(presetId) {
+    await presetStorage.deletePreset(presetId);
 }
 
 initApp();
