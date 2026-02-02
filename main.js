@@ -75,7 +75,6 @@ async function initApp() {
 
             // Preload sample library
             const defaultSamples = [
-                '/audio/counting-to-10.wav',
                 '/audio/water.wav'
             ];
 
