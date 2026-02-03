@@ -62,6 +62,10 @@ export class AdditiveSynth {
         this.harmonicLevels = new Array(16).fill(0); // All off by default
         this.modAssignments = new Array(16).fill(null); // LFO assignments per harmonic
         this.masterVolume = 0.5;
+        this.delaySendLevel = 0;
+        this.reverbSendLevel = 0;
+        this.delaySendGain = null;
+        this.reverbSendGain = null;
 
         this.init();
     }
@@ -76,16 +80,16 @@ export class AdditiveSynth {
         this.masterGain.gain.setValueAtTime(0, ctx.currentTime);
         this.masterGain.connect(audioEngine.masterGain);
 
-        // Also connect to delay/reverb sends
-        const delaySend = ctx.createGain();
-        delaySend.gain.setValueAtTime(0.3, ctx.currentTime);
-        this.masterGain.connect(delaySend);
-        delaySend.connect(audioEngine.delayInput);
+        // FX sends (delay and reverb)
+        this.delaySendGain = ctx.createGain();
+        this.delaySendGain.gain.setValueAtTime(this.delaySendLevel, ctx.currentTime);
+        this.masterGain.connect(this.delaySendGain);
+        this.delaySendGain.connect(audioEngine.delayInput);
 
-        const reverbSend = ctx.createGain();
-        reverbSend.gain.setValueAtTime(0.2, ctx.currentTime);
-        this.masterGain.connect(reverbSend);
-        reverbSend.connect(audioEngine.reverbInput);
+        this.reverbSendGain = ctx.createGain();
+        this.reverbSendGain.gain.setValueAtTime(this.reverbSendLevel, ctx.currentTime);
+        this.masterGain.connect(this.reverbSendGain);
+        this.reverbSendGain.connect(audioEngine.reverbInput);
 
         // Create 16 oscillators
         for (let i = 0; i < 16; i++) {
@@ -169,6 +173,22 @@ export class AdditiveSynth {
         });
     }
 
+    setDelaySend(level) {
+        this.delaySendLevel = level;
+        if (!audioEngine.initialized || !this.delaySendGain) return;
+
+        const ctx = audioEngine.context;
+        this.delaySendGain.gain.setTargetAtTime(level, ctx.currentTime, 0.02);
+    }
+
+    setReverbSend(level) {
+        this.reverbSendLevel = level;
+        if (!audioEngine.initialized || !this.reverbSendGain) return;
+
+        const ctx = audioEngine.context;
+        this.reverbSendGain.gain.setTargetAtTime(level, ctx.currentTime, 0.02);
+    }
+
     applyModulation() {
         if (!audioEngine.initialized) return;
 
@@ -221,6 +241,8 @@ export class AdditiveSynth {
             harmonicLevels: [...this.harmonicLevels],
             modAssignments: [...this.modAssignments],
             masterVolume: this.masterVolume,
+            delaySendLevel: this.delaySendLevel,
+            reverbSendLevel: this.reverbSendLevel,
             isPlaying: this.isPlaying
         };
     }
@@ -236,6 +258,12 @@ export class AdditiveSynth {
         }
         if (state.masterVolume !== undefined) {
             this.masterVolume = state.masterVolume;
+        }
+        if (state.delaySendLevel !== undefined) {
+            this.setDelaySend(state.delaySendLevel);
+        }
+        if (state.reverbSendLevel !== undefined) {
+            this.setReverbSend(state.reverbSendLevel);
         }
         if (state.harmonicLevels) {
             state.harmonicLevels.forEach((level, i) => {

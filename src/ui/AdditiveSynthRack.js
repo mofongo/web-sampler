@@ -71,6 +71,16 @@ export class AdditiveSynthRack {
                                 min="0" max="1" step="0.01" value="0.5">
                         </div>
                         <div class="param-item">
+                            <label class="label-tiny">Delay Send <span id="delay-send-display">0</span>%</label>
+                            <input type="range" class="delay-send" id="additive-delay-send"
+                                min="0" max="1" step="0.01" value="0">
+                        </div>
+                        <div class="param-item">
+                            <label class="label-tiny">Reverb Send <span id="reverb-send-display">0</span>%</label>
+                            <input type="range" class="reverb-send" id="additive-reverb-send"
+                                min="0" max="1" step="0.01" value="0">
+                        </div>
+                        <div class="param-item">
                             <button class="additive-quick-btn" id="all-on">All On</button>
                             <button class="additive-quick-btn" id="all-off">All Off</button>
                         </div>
@@ -120,6 +130,26 @@ export class AdditiveSynthRack {
             const vol = parseFloat(e.target.value);
             additiveSynth.setMasterVolume(vol);
             masterVolDisplay.textContent = Math.round(vol * 100);
+            window.dispatchEvent(new CustomEvent('slot-state-changed'));
+        });
+
+        // Delay send
+        const delaySend = this.container.querySelector('#additive-delay-send');
+        const delaySendDisplay = this.container.querySelector('#delay-send-display');
+        delaySend.addEventListener('input', (e) => {
+            const level = parseFloat(e.target.value);
+            additiveSynth.setDelaySend(level);
+            delaySendDisplay.textContent = Math.round(level * 100);
+            window.dispatchEvent(new CustomEvent('slot-state-changed'));
+        });
+
+        // Reverb send
+        const reverbSend = this.container.querySelector('#additive-reverb-send');
+        const reverbSendDisplay = this.container.querySelector('#reverb-send-display');
+        reverbSend.addEventListener('input', (e) => {
+            const level = parseFloat(e.target.value);
+            additiveSynth.setReverbSend(level);
+            reverbSendDisplay.textContent = Math.round(level * 100);
             window.dispatchEvent(new CustomEvent('slot-state-changed'));
         });
 
@@ -206,6 +236,20 @@ export class AdditiveSynthRack {
             const masterVolDisplay = this.container.querySelector('#master-vol-display');
             masterVol.value = state.masterVolume;
             masterVolDisplay.textContent = Math.round(state.masterVolume * 100);
+        }
+
+        if (state.delaySendLevel !== undefined) {
+            const delaySend = this.container.querySelector('#additive-delay-send');
+            const delaySendDisplay = this.container.querySelector('#delay-send-display');
+            delaySend.value = state.delaySendLevel;
+            delaySendDisplay.textContent = Math.round(state.delaySendLevel * 100);
+        }
+
+        if (state.reverbSendLevel !== undefined) {
+            const reverbSend = this.container.querySelector('#additive-reverb-send');
+            const reverbSendDisplay = this.container.querySelector('#reverb-send-display');
+            reverbSend.value = state.reverbSendLevel;
+            reverbSendDisplay.textContent = Math.round(state.reverbSendLevel * 100);
         }
 
         if (state.harmonicLevels) {
