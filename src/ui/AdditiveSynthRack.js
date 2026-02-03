@@ -115,6 +115,15 @@ export class AdditiveSynthRack {
             }
         });
 
+        // Click on pitch label to reset to default (A2)
+        const pitchLabel = pitchSelect.previousElementSibling;
+        pitchLabel.style.cursor = 'pointer';
+        pitchLabel.addEventListener('click', () => {
+            pitchSelect.value = 'A2';
+            additiveSynth.setBaseFrequency(PITCH_PRESETS['A2'].frequency);
+            window.dispatchEvent(new CustomEvent('slot-state-changed'));
+        });
+
         // Frequency preset
         const freqSelect = this.container.querySelector('#freq-preset');
         freqSelect.addEventListener('change', (e) => {
