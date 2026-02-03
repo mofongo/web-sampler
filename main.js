@@ -2,6 +2,7 @@ import { audioEngine } from './src/audio/audioEngine';
 import { PlayerUI } from './src/ui/PlayerUI';
 import { LFORack } from './src/ui/LFORack';
 import { EffectsRack } from './src/ui/EffectsRack';
+import { AdditiveSynthRack } from './src/ui/AdditiveSynthRack';
 import { FreesoundBrowser } from './src/ui/FreesoundBrowser';
 import { PresetDropdown } from './src/ui/PresetDropdown';
 import { presetStorage } from './src/storage/presetStorage';
@@ -15,6 +16,7 @@ const recordBtn = document.querySelector('#record-btn');
 let slots = [];
 let lfoRack = null;
 let effectsRack = null;
+let additiveSynthRack = null;
 let freesoundBrowser = null;
 let presetDropdown = null;
 const MAX_SLOTS = 16;
@@ -30,6 +32,9 @@ async function initApp() {
 
     // Initialize Effects Rack
     effectsRack = new EffectsRack('effects-rack');
+
+    // Initialize Additive Synth Rack
+    additiveSynthRack = new AdditiveSynthRack('additive-synth-rack');
 
     // Initialize Freesound Browser
     freesoundBrowser = new FreesoundBrowser();
@@ -211,6 +216,11 @@ function applyProjectState(project) {
         effectsRack.setState(project.effects);
     }
 
+    // Apply additive synth settings
+    if (project.additiveSynth && additiveSynthRack) {
+        additiveSynthRack.setState(project.additiveSynth);
+    }
+
     // Match slots
     project.slots.forEach((slotData, index) => {
         if (slots[index]) {
@@ -231,6 +241,7 @@ function getProjectState() {
             type: audioEngine.lfos[id].type
         })),
         effects: effectsRack ? effectsRack.getState() : null,
+        additiveSynth: additiveSynthRack ? additiveSynthRack.getState() : null,
         slots: slots.map(s => s.getState())
     };
 }
