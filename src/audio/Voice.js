@@ -7,12 +7,17 @@ export class Voice {
     constructor(slotId) {
         this.slotId = slotId;
         this.buffer = null;
+        this.reversedBuffer = null;
         this.settings = {
             pitch: 1.0,
             cutoff: 20000,
             res: 1,
+            filterType: 'lowpass',
             attack: 0.01,
+            decay: 0.1,
+            sustain: 0.8,
             release: 0.4,
+            reverse: false,
             pan: 0,
             volume: 0.8,
             delaySend: 0,
@@ -28,6 +33,15 @@ export class Voice {
                 loopStart: null,
                 delaySend: null,
                 reverbSend: null
+            },
+            modulationDepths: {
+                pitch: 0.5,
+                cutoff: 0.5,
+                volume: 0.5,
+                pan: 0.5,
+                loopStart: 0.5,
+                delaySend: 0.5,
+                reverbSend: 0.5
             }
         };
 
@@ -43,6 +57,37 @@ export class Voice {
 
     setBuffer(buffer) {
         this.buffer = buffer;
+        this.reversedBuffer = null;
+    }
+
+    createReversedBuffer() {
+        if (!this.buffer || !audioEngine.context) return null;
+
+        const { context } = audioEngine;
+        const original = this.buffer;
+        const reversed = context.createBuffer(
+            original.numberOfChannels,
+            original.length,
+            original.sampleRate
+        );
+
+        for (let channel = 0; channel < original.numberOfChannels; channel++) {
+            const originalData = original.getChannelData(channel);
+            const reversedData = reversed.getChannelData(channel);
+            for (let i = 0; i < original.length; i++) {
+                reversedData[i] = originalData[original.length - 1 - i];
+            }
+        }
+
+        return reversed;
+    }
+
+    getPlaybackBuffer() {
+        if (!this.settings.reverse) return this.buffer;
+        if (!this.reversedBuffer) {
+            this.reversedBuffer = this.createReversedBuffer();
+        }
+        return this.reversedBuffer;
     }
 
     updateSettings(newSettings) {
@@ -69,44 +114,48 @@ export class Voice {
 
         if (this.settings.modAssignments.pitch) {
             const lfoVal = audioEngine.getLFOValue(this.settings.modAssignments.pitch);
-            pitch *= (1 + lfoVal * 0.5); // Modulation depth
+            const depth = this.settings.modulationDepths.pitch;
+            pitch *= (1 + lfoVal * depth);
         }
         if (this.settings.modAssignments.cutoff) {
             const lfoVal = audioEngine.getLFOValue(this.settings.modAssignments.cutoff);
+            const depth = this.settings.modulationDepths.cutoff;
             // Limit cutoff to valid range 20-20000
-            cutoff = Math.max(20, Math.min(20000, cutoff * Math.pow(2, lfoVal * 4)));
+            cutoff = Math.max(20, Math.min(20000, cutoff * Math.pow(2, lfoVal * depth * 8)));
         }
         if (this.settings.modAssignments.volume) {
             const lfoVal = audioEngine.getLFOValue(this.settings.modAssignments.volume);
-            volume *= Math.max(0, 1 + lfoVal);
+            const depth = this.settings.modulationDepths.volume;
+            volume *= Math.max(0, 1 + lfoVal * depth);
         }
         if (this.settings.modAssignments.pan) {
             const lfoVal = audioEngine.getLFOValue(this.settings.modAssignments.pan);
-            // Modulate pan by +/- 1.0, clamp to valid range -1 to 1
-            pan = Math.max(-1, Math.min(1, pan + lfoVal));
+            const depth = this.settings.modulationDepths.pan;
+            pan = Math.max(-1, Math.min(1, pan + lfoVal * depth));
         }
 
         if (this.activeSource) {
             this.activeSource.playbackRate.setTargetAtTime(pitch, now, 0.05);
 
             // Live Loop Updates
-            if (this.buffer) {
-                const startSec = this.settings.loopStart * this.buffer.duration;
-                const endSec = this.settings.loopEnd * this.buffer.duration;
+            const playbackBuffer = this.getPlaybackBuffer();
+            if (playbackBuffer) {
+                const startSec = this.settings.loopStart * playbackBuffer.duration;
+                const endSec = this.settings.loopEnd * playbackBuffer.duration;
                 const loopDuration = endSec - startSec;
 
                 // Modulate Loop Start (Shift Logic)
                 let finalStart = startSec;
                 if (this.settings.modAssignments.loopStart) {
                     const lfoVal = audioEngine.getLFOValue(this.settings.modAssignments.loopStart);
-                    // Modulate shift by +/- 50% of file duration
-                    const modAmount = lfoVal * 0.5 * this.buffer.duration;
+                    const depth = this.settings.modulationDepths.loopStart;
+                    const modAmount = lfoVal * depth * playbackBuffer.duration;
                     finalStart = startSec + modAmount;
                 }
 
                 // Clamp start so the full loop fits
                 // Max start = buffer.duration - loopDuration
-                finalStart = Math.max(0, Math.min(this.buffer.duration - loopDuration, finalStart));
+                finalStart = Math.max(0, Math.min(playbackBuffer.duration - loopDuration, finalStart));
 
                 // Calculate End based on fixed duration
                 const finalEnd = finalStart + loopDuration;
@@ -117,6 +166,7 @@ export class Voice {
             }
         }
         if (this.filterNode) {
+            this.filterNode.type = this.settings.filterType;
             this.filterNode.frequency.setTargetAtTime(cutoff, now, 0.05);
             this.filterNode.Q.setTargetAtTime(this.settings.res, now, 0.05);
         }
@@ -132,11 +182,13 @@ export class Voice {
 
         if (this.settings.modAssignments.delaySend) {
             const lfoVal = audioEngine.getLFOValue(this.settings.modAssignments.delaySend);
-            delaySend = Math.max(0, Math.min(1, delaySend + lfoVal * 0.5));
+            const depth = this.settings.modulationDepths.delaySend;
+            delaySend = Math.max(0, Math.min(1, delaySend + lfoVal * depth));
         }
         if (this.settings.modAssignments.reverbSend) {
             const lfoVal = audioEngine.getLFOValue(this.settings.modAssignments.reverbSend);
-            reverbSend = Math.max(0, Math.min(1, reverbSend + lfoVal * 0.5));
+            const depth = this.settings.modulationDepths.reverbSend;
+            reverbSend = Math.max(0, Math.min(1, reverbSend + lfoVal * depth));
         }
 
         if (this.delaySendNode) {
@@ -148,7 +200,8 @@ export class Voice {
     }
 
     trigger() {
-        if (!this.buffer || !audioEngine.initialized) return;
+        const playbackBuffer = this.getPlaybackBuffer();
+        if (!playbackBuffer || !audioEngine.initialized) return;
 
         // Voice stealing / Cleanup previous
         if (this.activeSource) {
@@ -165,18 +218,18 @@ export class Voice {
         const now = context.currentTime;
 
         // Calculate loop points in seconds
-        const startSec = this.settings.loopStart * this.buffer.duration;
-        const endSec = this.settings.loopEnd * this.buffer.duration;
+        const startSec = this.settings.loopStart * playbackBuffer.duration;
+        const endSec = this.settings.loopEnd * playbackBuffer.duration;
         const duration = Math.max(0.01, endSec - startSec);
 
         // Nodes
         this.activeSource = context.createBufferSource();
-        this.activeSource.buffer = this.buffer;
+        this.activeSource.buffer = playbackBuffer;
         this.activeSource.playbackRate.value = this.settings.pitch;
 
         this.gainNode = context.createGain();
         this.filterNode = context.createBiquadFilter();
-        this.filterNode.type = 'lowpass';
+        this.filterNode.type = this.settings.filterType;
         this.filterNode.frequency.value = this.settings.cutoff;
         this.filterNode.Q.value = this.settings.res;
 
@@ -211,12 +264,17 @@ export class Voice {
             this.reverbSendNode.connect(audioEngine.reverbInput);
         }
 
-        // Initial volume
+        // ADSR envelope
         const targetVol = this.isMuted ? 0 : this.settings.volume;
-        this.gainNode.gain.setValueAtTime(0, now);
+        const attackTime = this.settings.attack;
+        const decayTime = this.settings.decay;
+        const sustainLevel = this.settings.sustain * targetVol;
 
-        // ADSR - Attack
-        this.gainNode.gain.linearRampToValueAtTime(targetVol, now + this.settings.attack);
+        this.gainNode.gain.setValueAtTime(0, now);
+        // Attack: 0 -> peak
+        this.gainNode.gain.linearRampToValueAtTime(targetVol, now + attackTime);
+        // Decay: peak -> sustain level
+        this.gainNode.gain.linearRampToValueAtTime(sustainLevel, now + attackTime + decayTime);
 
         // Play with loop points
         if (this.settings.loop) {
@@ -224,14 +282,16 @@ export class Voice {
             this.activeSource.loopStart = startSec;
             this.activeSource.loopEnd = endSec;
             this.activeSource.start(now, startSec);
+            // For looping: sustain holds indefinitely until stop() is called
         } else {
             this.activeSource.start(now, startSec, duration);
 
-            // Handle Release
+            // Handle Release for one-shot samples
             const scaledDuration = duration / this.settings.pitch;
             const stopTime = now + scaledDuration;
 
-            this.gainNode.gain.setValueAtTime(targetVol, stopTime);
+            // Release starts from sustain level
+            this.gainNode.gain.setValueAtTime(sustainLevel, stopTime);
             this.gainNode.gain.exponentialRampToValueAtTime(0.001, stopTime + this.settings.release);
 
             this.activeSource.stop(stopTime + this.settings.release);
@@ -267,13 +327,18 @@ export class Voice {
     stop() {
         if (this.activeSource) {
             const now = audioEngine.context.currentTime;
+            const releaseTime = Math.min(this.settings.release, 0.5); // Cap release for responsive stopping
+
             this.gainNode.gain.cancelScheduledValues(now);
-            this.gainNode.gain.setTargetAtTime(0, now, 0.05);
-            this.activeSource.stop(now + 0.1);
+            // Get current gain value and fade from there
+            const currentGain = this.gainNode.gain.value;
+            this.gainNode.gain.setValueAtTime(currentGain, now);
+            this.gainNode.gain.exponentialRampToValueAtTime(0.001, now + releaseTime);
+
+            this.activeSource.stop(now + releaseTime);
 
             if (this.cleanupTimeout) clearTimeout(this.cleanupTimeout);
-            // FIX: Assign the timeout ID so it can be cleared if re-triggered
-            this.cleanupTimeout = setTimeout(() => this.cleanup(), 150);
+            this.cleanupTimeout = setTimeout(() => this.cleanup(), (releaseTime * 1000) + 100);
         }
     }
 

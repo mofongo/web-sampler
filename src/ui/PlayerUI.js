@@ -48,6 +48,7 @@ export class PlayerUI {
                     <option value="">Select a Sample</option>
                 </select>
                 <div class="slot-actions">
+                    <button class="btn-icon btn-reverse" title="Reverse">R</button>
                     <button class="btn-icon btn-loop active" title="Toggle Looping">L</button>
                     <button class="btn-icon btn-mute" title="Mute">M</button>
                     <button class="btn-icon btn-play" title="Play">▶</button>
@@ -76,11 +77,18 @@ export class PlayerUI {
                             <option value="lfo3">L3</option>
                             <option value="lfo4">L4</option>
                         </select>
+                        <input type="range" class="mod-depth param-depth-pitch" min="0" max="1" step="0.01" value="0.5" title="Mod Depth">
                     </div>
                 </div>
                 <div class="param-item">
-                    <label class="label-tiny">Cutoff</label>
+                    <label class="label-tiny">Filter</label>
                     <div class="param-row">
+                        <select class="param-filter-type" title="Filter Type">
+                            <option value="lowpass">LP</option>
+                            <option value="highpass">HP</option>
+                            <option value="bandpass">BP</option>
+                            <option value="notch">Notch</option>
+                        </select>
                         <input type="range" class="param-cutoff" min="20" max="20000" step="1" value="20000">
                         <select class="mod-select param-mod-cutoff" title="LFO Cutoff">
                             <option value="">LFO</option>
@@ -89,6 +97,7 @@ export class PlayerUI {
                             <option value="lfo3">L3</option>
                             <option value="lfo4">L4</option>
                         </select>
+                        <input type="range" class="mod-depth param-depth-cutoff" min="0" max="1" step="0.01" value="0.5" title="Mod Depth">
                     </div>
                 </div>
                 <div class="param-item">
@@ -102,6 +111,7 @@ export class PlayerUI {
                             <option value="lfo3">L3</option>
                             <option value="lfo4">L4</option>
                         </select>
+                        <input type="range" class="mod-depth param-depth-pan" min="0" max="1" step="0.01" value="0.5" title="Mod Depth">
                     </div>
                 </div>
                 <div class="param-item">
@@ -115,6 +125,7 @@ export class PlayerUI {
                             <option value="lfo3">L3</option>
                             <option value="lfo4">L4</option>
                         </select>
+                        <input type="range" class="mod-depth param-depth-volume" min="0" max="1" step="0.01" value="0.5" title="Mod Depth">
                     </div>
                 </div>
                 <div class="param-item">
@@ -128,6 +139,31 @@ export class PlayerUI {
                             <option value="lfo3">L3</option>
                             <option value="lfo4">L4</option>
                         </select>
+                        <input type="range" class="mod-depth param-depth-loop-start" min="0" max="1" step="0.01" value="0.5" title="Mod Depth">
+                    </div>
+                </div>
+                <div class="param-item">
+                    <label class="label-tiny">Attack</label>
+                    <div class="param-row">
+                        <input type="range" class="param-attack" min="0.001" max="2.0" step="0.001" value="0.01" title="Attack Time">
+                    </div>
+                </div>
+                <div class="param-item">
+                    <label class="label-tiny">Decay</label>
+                    <div class="param-row">
+                        <input type="range" class="param-decay" min="0.001" max="2.0" step="0.001" value="0.1" title="Decay Time">
+                    </div>
+                </div>
+                <div class="param-item">
+                    <label class="label-tiny">Sustain</label>
+                    <div class="param-row">
+                        <input type="range" class="param-sustain" min="0" max="1.0" step="0.01" value="0.8" title="Sustain Level">
+                    </div>
+                </div>
+                <div class="param-item">
+                    <label class="label-tiny">Release</label>
+                    <div class="param-row">
+                        <input type="range" class="param-release" min="0.01" max="3.0" step="0.01" value="0.4" title="Release Time">
                     </div>
                 </div>
                 <div class="param-item">
@@ -141,6 +177,7 @@ export class PlayerUI {
                             <option value="lfo3">L3</option>
                             <option value="lfo4">L4</option>
                         </select>
+                        <input type="range" class="mod-depth param-depth-delay-send" min="0" max="1" step="0.01" value="0.5" title="Mod Depth">
                     </div>
                 </div>
                 <div class="param-item">
@@ -154,6 +191,7 @@ export class PlayerUI {
                             <option value="lfo3">L3</option>
                             <option value="lfo4">L4</option>
                         </select>
+                        <input type="range" class="mod-depth param-depth-reverb-send" min="0" max="1" step="0.01" value="0.5" title="Mod Depth">
                     </div>
                 </div>
             </div>
@@ -513,6 +551,18 @@ export class PlayerUI {
             loopBtn.classList.toggle('active', isLooping);
         });
 
+        const reverseBtn = this.element.querySelector('.btn-reverse');
+        reverseBtn.addEventListener('click', () => {
+            const isReversed = !this.voice.settings.reverse;
+            this.voice.updateSettings({ reverse: isReversed });
+            reverseBtn.classList.toggle('active', isReversed);
+            // Retrigger if playing to apply reverse immediately
+            if (this.voice.isPlaying) {
+                this.voice.trigger();
+            }
+            window.dispatchEvent(new CustomEvent('slot-state-changed'));
+        });
+
         // Parameter Changes
         this.element.querySelector('.sample-select').addEventListener('change', (e) => {
             const buffer = audioEngine.getBuffer(e.target.value);
@@ -525,9 +575,14 @@ export class PlayerUI {
         const updateVoiceParams = () => {
             this.voice.updateSettings({
                 pitch: parseFloat(this.element.querySelector('.param-pitch').value),
+                filterType: this.element.querySelector('.param-filter-type').value,
                 cutoff: parseFloat(this.element.querySelector('.param-cutoff').value),
                 pan: parseFloat(this.element.querySelector('.param-pan').value),
                 volume: parseFloat(this.element.querySelector('.param-volume').value),
+                attack: parseFloat(this.element.querySelector('.param-attack').value),
+                decay: parseFloat(this.element.querySelector('.param-decay').value),
+                sustain: parseFloat(this.element.querySelector('.param-sustain').value),
+                release: parseFloat(this.element.querySelector('.param-release').value),
                 delaySend: parseFloat(this.element.querySelector('.param-delay-send').value),
                 reverbSend: parseFloat(this.element.querySelector('.param-reverb-send').value),
                 modAssignments: {
@@ -538,6 +593,15 @@ export class PlayerUI {
                     loopStart: this.element.querySelector('.param-mod-loop-start').value || null,
                     delaySend: this.element.querySelector('.param-mod-delay-send').value || null,
                     reverbSend: this.element.querySelector('.param-mod-reverb-send').value || null
+                },
+                modulationDepths: {
+                    pitch: parseFloat(this.element.querySelector('.param-depth-pitch').value),
+                    cutoff: parseFloat(this.element.querySelector('.param-depth-cutoff').value),
+                    volume: parseFloat(this.element.querySelector('.param-depth-volume').value),
+                    pan: parseFloat(this.element.querySelector('.param-depth-pan').value),
+                    loopStart: parseFloat(this.element.querySelector('.param-depth-loop-start').value),
+                    delaySend: parseFloat(this.element.querySelector('.param-depth-delay-send').value),
+                    reverbSend: parseFloat(this.element.querySelector('.param-depth-reverb-send').value)
                 }
             });
             window.dispatchEvent(new CustomEvent('slot-state-changed'));
@@ -744,12 +808,25 @@ export class PlayerUI {
 
         const settings = state.settings;
         this.element.querySelector('.param-pitch').value = settings.pitch;
+        this.element.querySelector('.param-filter-type').value = settings.filterType || 'lowpass';
         this.element.querySelector('.param-cutoff').value = settings.cutoff;
         this.element.querySelector('.param-pan').value = settings.pan || 0;
         this.element.querySelector('.param-volume').value = settings.volume || 0.8;
         this.element.querySelector('.param-loop-start').value = settings.loopStart || 0;
+        this.element.querySelector('.param-attack').value = settings.attack || 0.01;
+        this.element.querySelector('.param-decay').value = settings.decay || 0.1;
+        this.element.querySelector('.param-sustain').value = settings.sustain || 0.8;
+        this.element.querySelector('.param-release').value = settings.release || 0.4;
         this.element.querySelector('.param-delay-send').value = settings.delaySend || 0;
         this.element.querySelector('.param-reverb-send').value = settings.reverbSend || 0;
+
+        // Restore reverse button state
+        const reverseBtn = this.element.querySelector('.btn-reverse');
+        reverseBtn.classList.toggle('active', settings.reverse || false);
+
+        // Restore loop button state
+        const loopBtn = this.element.querySelector('.btn-loop');
+        loopBtn.classList.toggle('active', settings.loop !== false);
 
         if (settings.modAssignments) {
             this.element.querySelector('.param-mod-pitch').value = settings.modAssignments.pitch || '';
@@ -759,6 +836,16 @@ export class PlayerUI {
             this.element.querySelector('.param-mod-loop-start').value = settings.modAssignments.loopStart || '';
             this.element.querySelector('.param-mod-delay-send').value = settings.modAssignments.delaySend || '';
             this.element.querySelector('.param-mod-reverb-send').value = settings.modAssignments.reverbSend || '';
+        }
+
+        if (settings.modulationDepths) {
+            this.element.querySelector('.param-depth-pitch').value = settings.modulationDepths.pitch || 0.5;
+            this.element.querySelector('.param-depth-cutoff').value = settings.modulationDepths.cutoff || 0.5;
+            this.element.querySelector('.param-depth-volume').value = settings.modulationDepths.volume || 0.5;
+            this.element.querySelector('.param-depth-pan').value = settings.modulationDepths.pan || 0.5;
+            this.element.querySelector('.param-depth-loop-start').value = settings.modulationDepths.loopStart || 0.5;
+            this.element.querySelector('.param-depth-delay-send').value = settings.modulationDepths.delaySend || 0.5;
+            this.element.querySelector('.param-depth-reverb-send').value = settings.modulationDepths.reverbSend || 0.5;
         }
 
         this.voice.updateSettings(settings);

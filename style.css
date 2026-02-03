@@ -161,6 +161,11 @@ button.primary:hover {
   border-color: var(--accent-color);
 }
 
+.btn-reverse.active {
+  color: var(--accent-color);
+  border-color: var(--accent-color);
+}
+
 .slot-title {
   font-size: 0.7rem;
   font-weight: 800;
@@ -309,6 +314,20 @@ button.primary:hover {
   padding: 2px 4px;
   background: #111;
   border-color: #333;
+}
+
+.mod-depth {
+  width: 40px;
+  flex-shrink: 0;
+}
+
+.param-filter-type {
+  width: 55px;
+  font-size: 0.65rem;
+  padding: 2px 4px;
+  background: #111;
+  border-color: #333;
+  flex-shrink: 0;
 }
 
 /* Global LFO Panel */
