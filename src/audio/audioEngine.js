@@ -12,10 +12,29 @@ class LFO {
         this.nextRandomValue = Math.random() * 2 - 1;
         this.lastUpdateTime = 0;
         this.lastCycleSNH = -1;
+
+        // Cross-modulation
+        this.modAssignments = {
+            frequency: null,
+            amplitude: null
+        };
+        this.modulationDepths = {
+            frequency: 0.5,
+            amplitude: 0.5
+        };
     }
 
-    update(currentTime, deltaTime) {
-        this.phase += 2 * Math.PI * this.frequency * deltaTime;
+    update(currentTime, deltaTime, getLFOValue) {
+        let freq = this.frequency;
+
+        // Cross-modulate frequency from another LFO
+        if (this.modAssignments.frequency && getLFOValue) {
+            const modVal = getLFOValue(this.modAssignments.frequency);
+            freq *= (1 + modVal * this.modulationDepths.frequency);
+            freq = Math.max(0.01, freq);
+        }
+
+        this.phase += 2 * Math.PI * freq * deltaTime;
 
         switch (this.type) {
             case 'sine':
@@ -46,6 +65,12 @@ class LFO {
                 const f = (1 - Math.cos(progress * Math.PI)) * 0.5;
                 this.value = this.lastRandomValue * (1 - f) + this.nextRandomValue * f;
                 break;
+        }
+
+        // Cross-modulate amplitude from another LFO
+        if (this.modAssignments.amplitude && getLFOValue) {
+            const modVal = getLFOValue(this.modAssignments.amplitude);
+            this.value *= Math.max(0, 1 + modVal * this.modulationDepths.amplitude);
         }
     }
 }
@@ -167,7 +192,7 @@ class AudioEngine {
             this.lastTickTime = time;
 
             if (deltaTime > 0 && deltaTime < 0.1) {
-                Object.values(this.lfos).forEach(lfo => lfo.update(time, deltaTime));
+                Object.values(this.lfos).forEach(lfo => lfo.update(time, deltaTime, (id) => this.getLFOValue(id)));
                 // Apply modulated effects
                 this.applyModulatedEffects();
                 // Signal voices to update their modulated parameters
@@ -189,6 +214,19 @@ class AudioEngine {
             if (params.frequency !== undefined) lfo.frequency = params.frequency;
             if (params.type !== undefined) lfo.type = params.type;
         }
+    }
+
+    setLFOModAssignment(lfoId, param, sourceId) {
+        const lfo = this.lfos[lfoId];
+        if (!lfo) return;
+        if (sourceId === lfoId) return; // prevent self-modulation
+        lfo.modAssignments[param] = sourceId || null;
+    }
+
+    setLFOModDepth(lfoId, param, depth) {
+        const lfo = this.lfos[lfoId];
+        if (!lfo) return;
+        lfo.modulationDepths[param] = depth;
     }
 
     async decodeFile(file) {

@@ -42,6 +42,26 @@ export class LFORack {
                         <label class="label-tiny">Speed <span class="lfo-speed-display" id="speed-${lfoId}">1.0</span> Hz</label>
                         <input type="range" class="lfo-freq" data-lfo="${lfoId}" min="0.1" max="20.0" step="0.1" value="1.0">
                     </div>
+                    <div class="param-item lfo-xmod">
+                        <label class="label-tiny">Freq Mod</label>
+                        <div class="mod-row">
+                            <select class="lfo-mod-source" data-lfo="${lfoId}" data-param="frequency">
+                                <option value="">-</option>
+                                ${[1,2,3,4].filter(j => j !== i).map(j => `<option value="lfo${j}">L${j}</option>`).join('')}
+                            </select>
+                            <input type="range" class="lfo-mod-depth" data-lfo="${lfoId}" data-param="frequency" min="0" max="1" step="0.01" value="0.5">
+                        </div>
+                    </div>
+                    <div class="param-item lfo-xmod">
+                        <label class="label-tiny">Amp Mod</label>
+                        <div class="mod-row">
+                            <select class="lfo-mod-source" data-lfo="${lfoId}" data-param="amplitude">
+                                <option value="">-</option>
+                                ${[1,2,3,4].filter(j => j !== i).map(j => `<option value="lfo${j}">L${j}</option>`).join('')}
+                            </select>
+                            <input type="range" class="lfo-mod-depth" data-lfo="${lfoId}" data-param="amplitude" min="0" max="1" step="0.01" value="0.5">
+                        </div>
+                    </div>
                 </div>
             `;
             this.container.appendChild(slot);
@@ -67,6 +87,24 @@ export class LFORack {
                 audioEngine.setLFOParams(id, { frequency: freq });
                 const speedDisplay = document.getElementById(`speed-${id}`);
                 if (speedDisplay) speedDisplay.textContent = freq.toFixed(1);
+                window.dispatchEvent(new CustomEvent('slot-state-changed'));
+            });
+        });
+
+        this.container.querySelectorAll('.lfo-mod-source').forEach(select => {
+            select.addEventListener('change', (e) => {
+                const lfoId = e.target.dataset.lfo;
+                const param = e.target.dataset.param;
+                audioEngine.setLFOModAssignment(lfoId, param, e.target.value || null);
+                window.dispatchEvent(new CustomEvent('slot-state-changed'));
+            });
+        });
+
+        this.container.querySelectorAll('.lfo-mod-depth').forEach(input => {
+            input.addEventListener('input', (e) => {
+                const lfoId = e.target.dataset.lfo;
+                const param = e.target.dataset.param;
+                audioEngine.setLFOModDepth(lfoId, param, parseFloat(e.target.value));
                 window.dispatchEvent(new CustomEvent('slot-state-changed'));
             });
         });

@@ -475,6 +475,27 @@ button.primary:hover {
   gap: 0.75rem;
 }
 
+.lfo-xmod {
+  gap: 0.2rem;
+}
+
+.lfo-xmod .mod-row {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.lfo-xmod .mod-row select {
+  width: 40px;
+  font-size: 0.6rem;
+  padding: 2px 4px;
+  flex-shrink: 0;
+}
+
+.lfo-xmod .mod-row input[type="range"] {
+  flex: 1;
+}
+
 select {
   background: #25252b;
   border: 1px solid var(--border-color);
