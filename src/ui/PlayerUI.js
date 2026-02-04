@@ -66,132 +66,131 @@ export class PlayerUI {
                 </div>
             </div>
             <div class="parameter-grid">
-                <div class="param-item">
+                <div class="param-box">
                     <label class="label-tiny">Pitch</label>
-                    <div class="param-row">
-                        <input type="range" class="param-pitch" min="0.5" max="2.0" step="0.01" value="1.0">
-                        <select class="mod-select param-mod-pitch" title="LFO Pitch">
+                    <input type="range" class="param-pitch" min="0.5" max="2.0" step="0.01" value="1.0">
+                    <div class="mod-row">
+                        <select class="mod-select param-mod-pitch" title="LFO">
                             <option value="">LFO</option>
                             <option value="lfo1">L1</option>
                             <option value="lfo2">L2</option>
                             <option value="lfo3">L3</option>
                             <option value="lfo4">L4</option>
                         </select>
-                        <input type="range" class="mod-depth param-depth-pitch" min="0" max="1" step="0.01" value="0.5" title="Mod Depth">
+                        <input type="range" class="mod-depth param-depth-pitch" min="0" max="1" step="0.01" value="0.5" title="Depth">
                     </div>
                 </div>
-                <div class="param-item">
-                    <label class="label-tiny">Filter</label>
-                    <div class="param-row">
+                <div class="param-box">
+                    <div class="label-row">
+                        <label class="label-tiny">Filter</label>
                         <select class="param-filter-type" title="Filter Type">
                             <option value="lowpass">LP</option>
                             <option value="highpass">HP</option>
                             <option value="bandpass">BP</option>
-                            <option value="notch">Notch</option>
+                            <option value="notch">NT</option>
                         </select>
-                        <input type="range" class="param-cutoff" min="20" max="20000" step="1" value="20000">
-                        <select class="mod-select param-mod-cutoff" title="LFO Cutoff">
+                    </div>
+                    <input type="range" class="param-cutoff" min="20" max="20000" step="1" value="20000">
+                    <div class="mod-row">
+                        <select class="mod-select param-mod-cutoff" title="LFO">
                             <option value="">LFO</option>
                             <option value="lfo1">L1</option>
                             <option value="lfo2">L2</option>
                             <option value="lfo3">L3</option>
                             <option value="lfo4">L4</option>
                         </select>
-                        <input type="range" class="mod-depth param-depth-cutoff" min="0" max="1" step="0.01" value="0.5" title="Mod Depth">
+                        <input type="range" class="mod-depth param-depth-cutoff" min="0" max="1" step="0.01" value="0.5" title="Depth">
                     </div>
                 </div>
-                <div class="param-item">
-                    <label class="label-tiny">Pan</label>
-                    <div class="param-row">
-                        <input type="range" class="param-pan" min="-1" max="1" step="0.01" value="0">
-                        <select class="mod-select param-mod-pan" title="LFO Pan">
-                            <option value="">LFO</option>
-                            <option value="lfo1">L1</option>
-                            <option value="lfo2">L2</option>
-                            <option value="lfo3">L3</option>
-                            <option value="lfo4">L4</option>
-                        </select>
-                        <input type="range" class="mod-depth param-depth-pan" min="0" max="1" step="0.01" value="0.5" title="Mod Depth">
-                    </div>
-                </div>
-                <div class="param-item">
+                <div class="param-box">
                     <label class="label-tiny">Volume</label>
-                     <div class="param-row">
-                        <input type="range" class="param-volume" min="0" max="1.0" step="0.01" value="0.8" title="Volume">
-                        <select class="mod-select param-mod-volume">
+                    <input type="range" class="param-volume" min="0" max="1.0" step="0.01" value="0.8">
+                    <div class="mod-row">
+                        <select class="mod-select param-mod-volume" title="LFO">
                             <option value="">LFO</option>
                             <option value="lfo1">L1</option>
                             <option value="lfo2">L2</option>
                             <option value="lfo3">L3</option>
                             <option value="lfo4">L4</option>
                         </select>
-                        <input type="range" class="mod-depth param-depth-volume" min="0" max="1" step="0.01" value="0.5" title="Mod Depth">
+                        <input type="range" class="mod-depth param-depth-volume" min="0" max="1" step="0.01" value="0.5" title="Depth">
                     </div>
                 </div>
-                <div class="param-item">
-                    <label class="label-tiny">Loop Start</label>
-                     <div class="param-row">
-                        <input type="range" class="param-loop-start" min="0" max="1.0" step="0.01" value="0" title="Loop Start Mod">
-                        <select class="mod-select param-mod-loop-start">
-                             <option value="">LFO</option>
+                <div class="param-box">
+                    <label class="label-tiny">Pan</label>
+                    <input type="range" class="param-pan" min="-1" max="1" step="0.01" value="0">
+                    <div class="mod-row">
+                        <select class="mod-select param-mod-pan" title="LFO">
+                            <option value="">LFO</option>
                             <option value="lfo1">L1</option>
                             <option value="lfo2">L2</option>
                             <option value="lfo3">L3</option>
                             <option value="lfo4">L4</option>
                         </select>
-                        <input type="range" class="mod-depth param-depth-loop-start" min="0" max="1" step="0.01" value="0.5" title="Mod Depth">
+                        <input type="range" class="mod-depth param-depth-pan" min="0" max="1" step="0.01" value="0.5" title="Depth">
                     </div>
                 </div>
-                <div class="param-item">
-                    <label class="label-tiny">Attack</label>
-                    <div class="param-row">
-                        <input type="range" class="param-attack" min="0.001" max="2.0" step="0.001" value="0.01" title="Attack Time">
+                <div class="param-box">
+                    <label class="label-tiny">Loop</label>
+                    <input type="range" class="param-loop-start" min="0" max="1.0" step="0.01" value="0">
+                    <div class="mod-row">
+                        <select class="mod-select param-mod-loop-start" title="LFO">
+                            <option value="">LFO</option>
+                            <option value="lfo1">L1</option>
+                            <option value="lfo2">L2</option>
+                            <option value="lfo3">L3</option>
+                            <option value="lfo4">L4</option>
+                        </select>
+                        <input type="range" class="mod-depth param-depth-loop-start" min="0" max="1" step="0.01" value="0.5" title="Depth">
                     </div>
                 </div>
-                <div class="param-item">
-                    <label class="label-tiny">Decay</label>
-                    <div class="param-row">
-                        <input type="range" class="param-decay" min="0.001" max="2.0" step="0.001" value="0.1" title="Decay Time">
-                    </div>
-                </div>
-                <div class="param-item">
-                    <label class="label-tiny">Sustain</label>
-                    <div class="param-row">
-                        <input type="range" class="param-sustain" min="0" max="1.0" step="0.01" value="0.8" title="Sustain Level">
-                    </div>
-                </div>
-                <div class="param-item">
-                    <label class="label-tiny">Release</label>
-                    <div class="param-row">
-                        <input type="range" class="param-release" min="0.01" max="3.0" step="0.01" value="0.4" title="Release Time">
-                    </div>
-                </div>
-                <div class="param-item">
+                <div class="param-box">
                     <label class="label-tiny">Delay</label>
-                    <div class="param-row">
-                        <input type="range" class="param-delay-send" min="0" max="1.0" step="0.01" value="0" title="Delay Send">
-                        <select class="mod-select param-mod-delay-send" title="LFO Delay Send">
+                    <input type="range" class="param-delay-send" min="0" max="1.0" step="0.01" value="0">
+                    <div class="mod-row">
+                        <select class="mod-select param-mod-delay-send" title="LFO">
                             <option value="">LFO</option>
                             <option value="lfo1">L1</option>
                             <option value="lfo2">L2</option>
                             <option value="lfo3">L3</option>
                             <option value="lfo4">L4</option>
                         </select>
-                        <input type="range" class="mod-depth param-depth-delay-send" min="0" max="1" step="0.01" value="0.5" title="Mod Depth">
+                        <input type="range" class="mod-depth param-depth-delay-send" min="0" max="1" step="0.01" value="0.5" title="Depth">
                     </div>
                 </div>
-                <div class="param-item">
+                <div class="param-box">
                     <label class="label-tiny">Reverb</label>
-                    <div class="param-row">
-                        <input type="range" class="param-reverb-send" min="0" max="1.0" step="0.01" value="0" title="Reverb Send">
-                        <select class="mod-select param-mod-reverb-send" title="LFO Reverb Send">
+                    <input type="range" class="param-reverb-send" min="0" max="1.0" step="0.01" value="0">
+                    <div class="mod-row">
+                        <select class="mod-select param-mod-reverb-send" title="LFO">
                             <option value="">LFO</option>
                             <option value="lfo1">L1</option>
                             <option value="lfo2">L2</option>
                             <option value="lfo3">L3</option>
                             <option value="lfo4">L4</option>
                         </select>
-                        <input type="range" class="mod-depth param-depth-reverb-send" min="0" max="1" step="0.01" value="0.5" title="Mod Depth">
+                        <input type="range" class="mod-depth param-depth-reverb-send" min="0" max="1" step="0.01" value="0.5" title="Depth">
+                    </div>
+                </div>
+                <div class="param-box adsr-box">
+                    <label class="label-tiny">ADSR</label>
+                    <div class="adsr-sliders">
+                        <div class="adsr-slider">
+                            <input type="range" class="param-attack" min="0.001" max="2.0" step="0.001" value="0.01" title="Attack">
+                            <span class="adsr-label">A</span>
+                        </div>
+                        <div class="adsr-slider">
+                            <input type="range" class="param-decay" min="0.001" max="2.0" step="0.001" value="0.1" title="Decay">
+                            <span class="adsr-label">D</span>
+                        </div>
+                        <div class="adsr-slider">
+                            <input type="range" class="param-sustain" min="0" max="1.0" step="0.01" value="0.8" title="Sustain">
+                            <span class="adsr-label">S</span>
+                        </div>
+                        <div class="adsr-slider">
+                            <input type="range" class="param-release" min="0.01" max="3.0" step="0.01" value="0.4" title="Release">
+                            <span class="adsr-label">R</span>
+                        </div>
                     </div>
                 </div>
             </div>
