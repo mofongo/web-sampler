@@ -73,8 +73,8 @@ async function initApp() {
         audioEngine.downloadRecording(`poly-sampler-${timestamp}`);
     });
 
-    // Initialize Audio on first interaction
-    document.addEventListener('mousedown', async () => {
+    // Initialize Audio on first interaction (mousedown + touchstart for Mobile Safari)
+    const initAudioOnce = async () => {
         if (!audioEngine.initialized) {
             await audioEngine.init();
 
@@ -96,7 +96,11 @@ async function initApp() {
 
             setupVisualizer();
         }
-    }, { once: true });
+        document.removeEventListener('mousedown', initAudioOnce);
+        document.removeEventListener('touchstart', initAudioOnce);
+    };
+    document.addEventListener('mousedown', initAudioOnce);
+    document.addEventListener('touchstart', initAudioOnce);
 
     // Listeners
     addSlotBtn.addEventListener('click', () => {
