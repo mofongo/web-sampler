@@ -127,6 +127,23 @@ class AudioEngine {
 
         this.context = new (window.AudioContext || window.webkitAudioContext)();
 
+        // iOS Safari: set audio session to 'playback' to override the silent switch
+        if (navigator.audioSession) {
+            navigator.audioSession.type = 'playback';
+        }
+
+        // Resume context if suspended (required by Mobile Safari)
+        if (this.context.state === 'suspended') {
+            await this.context.resume();
+        }
+
+        // iOS Safari: play a silent buffer to fully unlock audio output
+        const silentBuffer = this.context.createBuffer(1, 1, this.context.sampleRate);
+        const silentSource = this.context.createBufferSource();
+        silentSource.buffer = silentBuffer;
+        silentSource.connect(this.context.destination);
+        silentSource.start();
+
         // Safety Limiter
         this.limiter = this.context.createDynamicsCompressor();
         this.limiter.threshold.setValueAtTime(-1, this.context.currentTime);
