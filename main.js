@@ -80,7 +80,6 @@ async function initApp() {
 
             // Preload sample library
             const defaultSamples = [
-                '/audio/water.wav',
                 '/audio/synth-pad-ambient-c.wav',
                 '/audio/synth-pad-ambient-c-high.wav',
                 '/audio/synth-pad-ambient-c-melod.wav'
