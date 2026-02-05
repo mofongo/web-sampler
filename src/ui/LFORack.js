@@ -32,7 +32,7 @@ export class LFORack {
                 <div class="lfo-controls">
                     <div class="param-item">
                         <label class="label-tiny">Shape</label>
-                        <select class="lfo-shape" data-lfo="${lfoId}">
+                        <select class="lfo-shape" data-lfo="${lfoId}" title="LFO waveform — Sine (smooth), S&H (random steps), Smooth Rand (interpolated random)">
                             <option value="sine">Sine</option>
                             <option value="random-square">S&H</option>
                             <option value="smooth-random">Smooth Rand</option>
@@ -40,26 +40,26 @@ export class LFORack {
                     </div>
                     <div class="param-item">
                         <label class="label-tiny">Speed <span class="lfo-speed-display" id="speed-${lfoId}">1.0</span> Hz</label>
-                        <input type="range" class="lfo-freq" data-lfo="${lfoId}" min="0.1" max="20.0" step="0.1" value="1.0">
+                        <input type="range" class="lfo-freq" data-lfo="${lfoId}" min="0.1" max="20.0" step="0.1" value="1.0" title="LFO speed — 0.1 Hz (slow) to 20 Hz (fast)">
                     </div>
                     <div class="param-item lfo-xmod">
                         <label class="label-tiny">Freq Mod</label>
                         <div class="mod-row">
-                            <select class="lfo-mod-source" data-lfo="${lfoId}" data-param="frequency">
+                            <select class="lfo-mod-source" data-lfo="${lfoId}" data-param="frequency" title="Choose another LFO to modulate this LFO's speed">
                                 <option value="">-</option>
                                 ${[1,2,3,4].filter(j => j !== i).map(j => `<option value="lfo${j}">L${j}</option>`).join('')}
                             </select>
-                            <input type="range" class="lfo-mod-depth" data-lfo="${lfoId}" data-param="frequency" min="0" max="1" step="0.01" value="0.5">
+                            <input type="range" class="lfo-mod-depth" data-lfo="${lfoId}" data-param="frequency" min="0" max="1" step="0.01" value="0.5" title="Frequency modulation depth — how much the source LFO affects speed">
                         </div>
                     </div>
                     <div class="param-item lfo-xmod">
                         <label class="label-tiny">Amp Mod</label>
                         <div class="mod-row">
-                            <select class="lfo-mod-source" data-lfo="${lfoId}" data-param="amplitude">
+                            <select class="lfo-mod-source" data-lfo="${lfoId}" data-param="amplitude" title="Choose another LFO to modulate this LFO's output level">
                                 <option value="">-</option>
                                 ${[1,2,3,4].filter(j => j !== i).map(j => `<option value="lfo${j}">L${j}</option>`).join('')}
                             </select>
-                            <input type="range" class="lfo-mod-depth" data-lfo="${lfoId}" data-param="amplitude" min="0" max="1" step="0.01" value="0.5">
+                            <input type="range" class="lfo-mod-depth" data-lfo="${lfoId}" data-param="amplitude" min="0" max="1" step="0.01" value="0.5" title="Amplitude modulation depth — how much the source LFO affects output level">
                         </div>
                     </div>
                 </div>

@@ -48,10 +48,10 @@ export class PlayerUI {
                     <option value="">Select a Sample</option>
                 </select>
                 <div class="slot-actions">
-                    <button class="btn-icon btn-reverse" title="Reverse">R</button>
-                    <button class="btn-icon btn-loop active" title="Toggle Looping">L</button>
-                    <button class="btn-icon btn-mute" title="Mute">M</button>
-                    <button class="btn-icon btn-play" title="Play">▶</button>
+                    <button class="btn-icon btn-reverse" title="Reverse — play sample backwards">R</button>
+                    <button class="btn-icon btn-loop active" title="Loop — toggle continuous looping">L</button>
+                    <button class="btn-icon btn-mute" title="Mute — silence this slot">M</button>
+                    <button class="btn-icon btn-play" title="Play / Stop">▶</button>
                 </div>
             </div>
             <div class="slot-main">
@@ -68,127 +68,127 @@ export class PlayerUI {
             <div class="parameter-grid">
                 <div class="param-box">
                     <label class="label-tiny">Pitch</label>
-                    <input type="range" class="param-pitch" min="0.5" max="2.0" step="0.01" value="1.0">
+                    <input type="range" class="param-pitch" min="0.5" max="2.0" step="0.01" value="1.0" title="Playback speed — 0.5x (half speed) to 2.0x (double speed)">
                     <div class="mod-row">
-                        <select class="mod-select param-mod-pitch" title="LFO">
+                        <select class="mod-select param-mod-pitch" title="Assign an LFO to modulate pitch">
                             <option value="">LFO</option>
                             <option value="lfo1">L1</option>
                             <option value="lfo2">L2</option>
                             <option value="lfo3">L3</option>
                             <option value="lfo4">L4</option>
                         </select>
-                        <input type="range" class="mod-depth param-depth-pitch" min="0" max="1" step="0.01" value="0.5" title="Depth">
+                        <input type="range" class="mod-depth param-depth-pitch" min="0" max="1" step="0.01" value="0.5" title="LFO modulation depth — how much the LFO affects pitch">
                     </div>
                 </div>
                 <div class="param-box">
                     <div class="label-row">
                         <label class="label-tiny">Filter</label>
-                        <select class="param-filter-type" title="Filter Type">
+                        <select class="param-filter-type" title="Filter type — LP (lowpass), HP (highpass), BP (bandpass), NT (notch)">
                             <option value="lowpass">LP</option>
                             <option value="highpass">HP</option>
                             <option value="bandpass">BP</option>
                             <option value="notch">NT</option>
                         </select>
                     </div>
-                    <input type="range" class="param-cutoff" min="20" max="20000" step="1" value="20000">
+                    <input type="range" class="param-cutoff" min="20" max="20000" step="1" value="20000" title="Filter cutoff frequency — 20 Hz to 20,000 Hz">
                     <div class="mod-row">
-                        <select class="mod-select param-mod-cutoff" title="LFO">
+                        <select class="mod-select param-mod-cutoff" title="Assign an LFO to modulate filter cutoff">
                             <option value="">LFO</option>
                             <option value="lfo1">L1</option>
                             <option value="lfo2">L2</option>
                             <option value="lfo3">L3</option>
                             <option value="lfo4">L4</option>
                         </select>
-                        <input type="range" class="mod-depth param-depth-cutoff" min="0" max="1" step="0.01" value="0.5" title="Depth">
+                        <input type="range" class="mod-depth param-depth-cutoff" min="0" max="1" step="0.01" value="0.5" title="LFO modulation depth — how much the LFO affects cutoff">
                     </div>
                 </div>
                 <div class="param-box">
                     <label class="label-tiny">Volume</label>
-                    <input type="range" class="param-volume" min="0" max="1.0" step="0.01" value="0.8">
+                    <input type="range" class="param-volume" min="0" max="1.0" step="0.01" value="0.8" title="Slot volume level — 0% to 100%">
                     <div class="mod-row">
-                        <select class="mod-select param-mod-volume" title="LFO">
+                        <select class="mod-select param-mod-volume" title="Assign an LFO to modulate volume (tremolo)">
                             <option value="">LFO</option>
                             <option value="lfo1">L1</option>
                             <option value="lfo2">L2</option>
                             <option value="lfo3">L3</option>
                             <option value="lfo4">L4</option>
                         </select>
-                        <input type="range" class="mod-depth param-depth-volume" min="0" max="1" step="0.01" value="0.5" title="Depth">
+                        <input type="range" class="mod-depth param-depth-volume" min="0" max="1" step="0.01" value="0.5" title="LFO modulation depth — how much the LFO affects volume">
                     </div>
                 </div>
                 <div class="param-box">
                     <label class="label-tiny">Pan</label>
-                    <input type="range" class="param-pan" min="-1" max="1" step="0.01" value="0">
+                    <input type="range" class="param-pan" min="-1" max="1" step="0.01" value="0" title="Stereo panning — left (-1) to right (+1)">
                     <div class="mod-row">
-                        <select class="mod-select param-mod-pan" title="LFO">
+                        <select class="mod-select param-mod-pan" title="Assign an LFO to modulate panning (auto-pan)">
                             <option value="">LFO</option>
                             <option value="lfo1">L1</option>
                             <option value="lfo2">L2</option>
                             <option value="lfo3">L3</option>
                             <option value="lfo4">L4</option>
                         </select>
-                        <input type="range" class="mod-depth param-depth-pan" min="0" max="1" step="0.01" value="0.5" title="Depth">
+                        <input type="range" class="mod-depth param-depth-pan" min="0" max="1" step="0.01" value="0.5" title="LFO modulation depth — how much the LFO affects panning">
                     </div>
                 </div>
                 <div class="param-box">
                     <label class="label-tiny">Loop</label>
-                    <input type="range" class="param-loop-start" min="0" max="1.0" step="0.01" value="0">
+                    <input type="range" class="param-loop-start" min="0" max="1.0" step="0.01" value="0" title="Loop region start position within the sample">
                     <div class="mod-row">
-                        <select class="mod-select param-mod-loop-start" title="LFO">
+                        <select class="mod-select param-mod-loop-start" title="Assign an LFO to shift loop start position">
                             <option value="">LFO</option>
                             <option value="lfo1">L1</option>
                             <option value="lfo2">L2</option>
                             <option value="lfo3">L3</option>
                             <option value="lfo4">L4</option>
                         </select>
-                        <input type="range" class="mod-depth param-depth-loop-start" min="0" max="1" step="0.01" value="0.5" title="Depth">
+                        <input type="range" class="mod-depth param-depth-loop-start" min="0" max="1" step="0.01" value="0.5" title="LFO modulation depth — how much the LFO shifts the loop position">
                     </div>
                 </div>
                 <div class="param-box">
                     <label class="label-tiny">Delay</label>
-                    <input type="range" class="param-delay-send" min="0" max="1.0" step="0.01" value="0">
+                    <input type="range" class="param-delay-send" min="0" max="1.0" step="0.01" value="0" title="Delay effect send level — 0% (dry) to 100% (full delay)">
                     <div class="mod-row">
-                        <select class="mod-select param-mod-delay-send" title="LFO">
+                        <select class="mod-select param-mod-delay-send" title="Assign an LFO to modulate delay send level">
                             <option value="">LFO</option>
                             <option value="lfo1">L1</option>
                             <option value="lfo2">L2</option>
                             <option value="lfo3">L3</option>
                             <option value="lfo4">L4</option>
                         </select>
-                        <input type="range" class="mod-depth param-depth-delay-send" min="0" max="1" step="0.01" value="0.5" title="Depth">
+                        <input type="range" class="mod-depth param-depth-delay-send" min="0" max="1" step="0.01" value="0.5" title="LFO modulation depth — how much the LFO affects delay send">
                     </div>
                 </div>
                 <div class="param-box">
                     <label class="label-tiny">Reverb</label>
-                    <input type="range" class="param-reverb-send" min="0" max="1.0" step="0.01" value="0">
+                    <input type="range" class="param-reverb-send" min="0" max="1.0" step="0.01" value="0" title="Reverb effect send level — 0% (dry) to 100% (full reverb)">
                     <div class="mod-row">
-                        <select class="mod-select param-mod-reverb-send" title="LFO">
+                        <select class="mod-select param-mod-reverb-send" title="Assign an LFO to modulate reverb send level">
                             <option value="">LFO</option>
                             <option value="lfo1">L1</option>
                             <option value="lfo2">L2</option>
                             <option value="lfo3">L3</option>
                             <option value="lfo4">L4</option>
                         </select>
-                        <input type="range" class="mod-depth param-depth-reverb-send" min="0" max="1" step="0.01" value="0.5" title="Depth">
+                        <input type="range" class="mod-depth param-depth-reverb-send" min="0" max="1" step="0.01" value="0.5" title="LFO modulation depth — how much the LFO affects reverb send">
                     </div>
                 </div>
                 <div class="param-box adsr-box">
                     <label class="label-tiny">ADSR</label>
                     <div class="adsr-sliders">
                         <div class="adsr-slider">
-                            <input type="range" class="param-attack" min="0.001" max="2.0" step="0.001" value="0.01" title="Attack">
+                            <input type="range" class="param-attack" min="0.001" max="2.0" step="0.001" value="0.01" title="Attack — time to reach peak volume (1ms to 2s)">
                             <span class="adsr-label">A</span>
                         </div>
                         <div class="adsr-slider">
-                            <input type="range" class="param-decay" min="0.001" max="2.0" step="0.001" value="0.1" title="Decay">
+                            <input type="range" class="param-decay" min="0.001" max="2.0" step="0.001" value="0.1" title="Decay — time to fall from peak to sustain level (1ms to 2s)">
                             <span class="adsr-label">D</span>
                         </div>
                         <div class="adsr-slider">
-                            <input type="range" class="param-sustain" min="0" max="1.0" step="0.01" value="0.8" title="Sustain">
+                            <input type="range" class="param-sustain" min="0" max="1.0" step="0.01" value="0.8" title="Sustain — volume level held during playback (0% to 100%)">
                             <span class="adsr-label">S</span>
                         </div>
                         <div class="adsr-slider">
-                            <input type="range" class="param-release" min="0.01" max="3.0" step="0.01" value="0.4" title="Release">
+                            <input type="range" class="param-release" min="0.01" max="3.0" step="0.01" value="0.4" title="Release — fade-out time after stopping (10ms to 3s)">
                             <span class="adsr-label">R</span>
                         </div>
                     </div>
